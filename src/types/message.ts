@@ -70,14 +70,21 @@ export interface ChartContentData {
 }
 
 export const ChartContentDataSchema = z.object({
-  type: z.literal('chart'),
-  chartType: z.enum(['line', 'bar', 'pie', 'area']),
-  title: z.string(),
-  description: z.string().optional(),
-  data: z.array(z.record(z.string(), z.union([z.string(), z.number()]))),
-  xKey: z.string(),
-  yKey: z.string(),
-  config: z.record(z.string(), z.object({ label: z.string(), color: z.string().optional() })).optional(),
+  type: z.literal('chart').describe('Must be "chart"'),
+  chartType: z.enum(['line', 'bar', 'pie', 'area']).describe('The type of chart to render'),
+  title: z.string().describe('The chart title'),
+  description: z.string().optional().describe('Optional description of what the chart shows'),
+  data: z
+    .array(z.record(z.string(), z.union([z.string(), z.number()])))
+    .describe(
+      'Array of data points. Each object must have keys matching xKey and yKey. Example: [{ "year": 2020, "value": 100 }, { "year": 2021, "value": 150 }]'
+    ),
+  xKey: z.string().describe('The key in data objects to use for the x-axis (e.g., "year")'),
+  yKey: z.string().describe('The key in data objects to use for the y-axis (e.g., "value")'),
+  config: z
+    .record(z.string(), z.object({ label: z.string(), color: z.string().optional() }))
+    .optional()
+    .describe('Optional configuration for data series labels and colors'),
 });
 
 export interface CodeContentData {

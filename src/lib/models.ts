@@ -13,6 +13,12 @@ export const MODELS: Model[] = [
     description: "Fast and efficient",
   },
   {
+    id: "openai/gpt-5-mini",
+    name: "GPT-5 Mini",
+    provider: "OpenAI",
+    description: "Fast and efficient, but more capable than GPT-5 Nano",
+  },
+  {
     id: "openai/gpt-4o-mini",
     name: "GPT-4o Mini",
     provider: "OpenAI",

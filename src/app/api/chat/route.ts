@@ -146,7 +146,7 @@ Be helpful, concise, and friendly. When generating interactive content, make it 
 
       generateChart: tool({
         description:
-          'Generate a data visualization chart. Use this to display numerical data, trends, comparisons, or distributions.',
+          'Generate a data visualization chart. IMPORTANT: You MUST include the "data" array with actual numerical values. The data array should contain objects with keys matching xKey and yKey. Example: if xKey="year" and yKey="value", then data should be [{"year": "2020", "value": 100}, {"year": "2021", "value": 150}]. Generate realistic data based on your knowledge.',
         inputSchema: ChartContentDataSchema,
         execute: async (params) => params,
       }),
