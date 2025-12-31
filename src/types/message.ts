@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-// Expansion States
-export type ExpansionState = 'collapsed' | 'partial' | 'expanded' | 'focused';
-
-export const ExpansionStateSchema = z.enum(['collapsed', 'partial', 'expanded', 'focused']);
-
 // Form Field Types
 export interface FormFieldOption {
   label: string;
@@ -181,10 +176,3 @@ export interface Message {
   toolInvocations?: ToolInvocation[];
 }
 
-// Expansion state tracking per message
-export interface ExpansionStateData {
-  messageId: string;
-  state: ExpansionState;
-  pinned: boolean;
-  interactionDepth: number;
-}

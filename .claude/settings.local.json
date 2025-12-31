@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ai-elements__get_ai_elements_components",
+      "mcp__ai-elements__get_ai_elements_component",
+      "mcp__shadcn__get_project_registries",
+      "mcp__shadcn__search_items_in_registries",
+      "Bash(yes:*)"
+    ]
+  }
+}

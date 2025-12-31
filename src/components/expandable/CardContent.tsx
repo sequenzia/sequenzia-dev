@@ -2,23 +2,18 @@
 
 import { memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { useChat } from '@/components/chat/ChatProvider';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { CardContentData } from '@/types';
 
 interface CardContentProps {
   content: CardContentData;
-  displayMode: 'preview' | 'partial' | 'full';
-  messageId: string;
+  messageId?: string;
 }
 
 export const CardContent = memo(function CardContent({
   content,
-  displayMode,
-  messageId,
 }: CardContentProps) {
   const { sendMessage } = useChat();
 
@@ -28,25 +23,6 @@ export const CardContent = memo(function CardContent({
     },
     [sendMessage]
   );
-
-  // Preview mode - just show icon and title
-  if (displayMode === 'preview') {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {content.media ? (
-          <ImageIcon className="w-4 h-4" />
-        ) : (
-          <FileText className="w-4 h-4" />
-        )}
-        <span className="text-sm">{content.title}</span>
-        {content.media && (
-          <Badge variant="secondary" className="text-xs">
-            {content.media.type}
-          </Badge>
-        )}
-      </div>
-    );
-  }
 
   return (
     <motion.div
@@ -59,7 +35,7 @@ export const CardContent = memo(function CardContent({
       )}
     >
       {/* Media */}
-      {content.media && displayMode === 'full' && (
+      {content.media && (
         <div className="relative aspect-video bg-muted">
           {content.media.type === 'image' ? (
             <img
@@ -77,24 +53,6 @@ export const CardContent = memo(function CardContent({
         </div>
       )}
 
-      {/* Thumbnail for partial mode */}
-      {content.media && displayMode === 'partial' && (
-        <div className="relative h-32 bg-muted flex items-center justify-center">
-          {content.media.type === 'image' ? (
-            <img
-              src={content.media.url}
-              alt={content.media.alt || content.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <ExternalLink className="w-8 h-8" />
-              <span className="text-sm">Video</span>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Content */}
       <div className="p-4 space-y-3">
         {/* Title */}
@@ -107,22 +65,15 @@ export const CardContent = memo(function CardContent({
           )}
         </div>
 
-        {/* Body content (only in full mode) */}
-        {content.content && displayMode === 'full' && (
+        {/* Body content */}
+        {content.content && (
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <p className="whitespace-pre-wrap">{content.content}</p>
           </div>
         )}
 
-        {/* Truncated content in partial mode */}
-        {content.content && displayMode === 'partial' && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {content.content}
-          </p>
-        )}
-
         {/* Actions */}
-        {content.actions && content.actions.length > 0 && displayMode === 'full' && (
+        {content.actions && content.actions.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
             {content.actions.map((action, index) => (
               <Button

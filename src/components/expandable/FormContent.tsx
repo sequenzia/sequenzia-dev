@@ -2,26 +2,22 @@
 
 import { memo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useChat } from '@/components/chat/ChatProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { FormContentData, FormField } from '@/types';
 
 interface FormContentProps {
   content: FormContentData;
-  displayMode: 'preview' | 'partial' | 'full';
-  messageId: string;
+  messageId?: string;
 }
 
 export const FormContent = memo(function FormContent({
   content,
-  displayMode,
-  messageId,
 }: FormContentProps) {
   const { sendMessage } = useChat();
   const [formData, setFormData] = useState<Record<string, string | number | boolean>>({});
@@ -53,27 +49,6 @@ export const FormContent = memo(function FormContent({
     [content, formData, sendMessage]
   );
 
-  // Preview mode - just show icon and title
-  if (displayMode === 'preview') {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <FileText className="w-4 h-4" />
-        <span className="text-sm">{content.title}</span>
-        <Badge variant="secondary" className="text-xs">
-          {content.fields.length} fields
-        </Badge>
-      </div>
-    );
-  }
-
-  // Determine which fields to show
-  const visibleFields =
-    displayMode === 'partial'
-      ? content.fields.slice(0, 3)
-      : content.fields;
-
-  const hasMoreFields = displayMode === 'partial' && content.fields.length > 3;
-
   if (submitted) {
     return (
       <motion.div
@@ -97,7 +72,7 @@ export const FormContent = memo(function FormContent({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       onClick={(e) => e.stopPropagation()}
-      className="space-y-4"
+      className="space-y-4 rounded-lg border bg-card p-4"
     >
       {/* Header */}
       <div>
@@ -111,7 +86,7 @@ export const FormContent = memo(function FormContent({
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {visibleFields.map((field, index) => (
+        {content.fields.map((field, index) => (
           <motion.div
             key={field.id}
             initial={{ opacity: 0, y: 10 }}
@@ -122,24 +97,14 @@ export const FormContent = memo(function FormContent({
               field={field}
               value={formData[field.id]}
               onChange={(value) => handleFieldChange(field.id, value)}
-              disabled={displayMode === 'partial'}
             />
           </motion.div>
         ))}
 
-        {/* More fields indicator */}
-        {hasMoreFields && (
-          <p className="text-sm text-muted-foreground italic">
-            +{content.fields.length - 3} more fields...
-          </p>
-        )}
-
-        {/* Submit button (only in full mode) */}
-        {displayMode === 'full' && (
-          <Button type="submit" className="w-full">
-            {content.submitLabel || 'Submit'}
-          </Button>
-        )}
+        {/* Submit button */}
+        <Button type="submit" className="w-full">
+          {content.submitLabel || 'Submit'}
+        </Button>
       </form>
     </motion.div>
   );
@@ -149,14 +114,12 @@ interface FormFieldRendererProps {
   field: FormField;
   value: string | number | boolean | undefined;
   onChange: (value: string | number | boolean) => void;
-  disabled?: boolean;
 }
 
 function FormFieldRenderer({
   field,
   value,
   onChange,
-  disabled,
 }: FormFieldRendererProps) {
   const stringValue = value?.toString() ?? '';
 
@@ -173,21 +136,18 @@ function FormFieldRenderer({
           placeholder={field.placeholder}
           value={stringValue}
           onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
           required={field.required}
-          className="min-h-[80px] bg-[var(--form-field)]"
+          className="min-h-[80px]"
         />
       ) : field.type === 'select' && field.options ? (
         <select
           id={field.id}
           value={stringValue}
           onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
           required={field.required}
           className={cn(
-            'flex h-10 w-full rounded-md border border-input bg-[var(--form-field)] px-3 py-2 text-sm',
-            'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            'disabled:cursor-not-allowed disabled:opacity-50'
+            'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
+            'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
           )}
         >
           <option value="">Select an option...</option>
@@ -204,7 +164,6 @@ function FormFieldRenderer({
             id={field.id}
             checked={value === true || value === 'true'}
             onChange={(e) => onChange(e.target.checked)}
-            disabled={disabled}
             className="h-4 w-4 rounded border-input"
           />
           {field.placeholder && (
@@ -223,7 +182,6 @@ function FormFieldRenderer({
             step={field.step ?? 1}
             value={Number(value) || field.min || 0}
             onChange={(e) => onChange(Number(e.target.value))}
-            disabled={disabled}
             className="flex-1"
           />
           <span className="text-sm font-medium w-12 text-right">
@@ -243,12 +201,10 @@ function FormFieldRenderer({
                 : e.target.value
             )
           }
-          disabled={disabled}
           required={field.required}
           min={field.min}
           max={field.max}
           step={field.step}
-          className="bg-[var(--form-field)]"
         />
       )}
     </div>

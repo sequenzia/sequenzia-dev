@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Tech Stack
+
+- **Framework**: Next.js 16.1 with App Router
+- **React**: 19.2 with Server Components
+- **AI**: Vercel AI SDK v6 (`ai`, `@ai-sdk/react`, `@ai-sdk/gateway`)
+- **UI Components**: Vercel AI Elements, shadcn/ui
+- **Styling**: Tailwind CSS v4
+- **Animation**: Framer Motion
+- **Validation**: Zod v4
+- **State**: React Context + TanStack Query
+
 ## Commands
 
 ```bash
@@ -13,36 +24,38 @@ npm run lint     # ESLint check
 
 ## Architecture Overview
 
-Sequenzia AI implements the **Expanding Message Paradigm** - an AI chat interface where messages can expand in-place to reveal interactive content (forms, charts, code, cards) rather than opening in separate panels.
-
-### Core Concept: 4-State Expansion System
-
-Messages exist in one of four states:
-
-- **collapsed**: Icon + title preview only
-- **partial**: Limited content (3 form fields, 10 code lines, 150px chart)
-- **expanded**: Full content
-- **focused**: Full content with backdrop blur on other messages
-
-State transitions: collapsed → partial → expanded → collapsed (cycle), any state → focused via Cmd+F
+Sequenzia AI is a chat interface built on Vercel's AI Elements component library. It uses the AI SDK v6's UIMessage format for rendering messages with text, tool calls, and rich content.
 
 ### Component Hierarchy
 
 ```text
-ChatProvider (expansion state + AI connection)
-├── ChatContainer (scroll management)
-│   └── MessageBubble (per-message expansion animation)
+ChatProvider (AI connection via useChat)
+├── ChatContainer (Conversation component with scroll management)
+│   └── ChatMessage (Message + Tool components)
 │       └── ExpandableContent (routes to content type)
 │           ├── FormContent
 │           ├── ChartContent
-│           ├── CodeContent
+│           ├── CodeContent (uses AI Elements CodeBlock)
 │           └── CardContent
-└── InputComposer (message input)
+└── InputComposer (PromptInput with model selector)
 ```
 
-### State Management Layers
+### AI Elements Components
 
-1. **ChatProvider context** - Expansion states via reducer (`Map<messageId, ExpansionStateData>`), AI chat via `@ai-sdk/react`
+Located in `src/components/ai-elements/`:
+
+- **Conversation** - Container with sticky scroll behavior (`use-stick-to-bottom`)
+- **Message** - User/assistant message bubbles with actions
+- **PromptInput** - Text input with file attachments and model selection
+- **Tool** - Collapsible tool invocation display with status
+- **CodeBlock** - Syntax highlighted code with Shiki
+- **Loader** - Streaming/loading indicators
+- **Reasoning** - Expandable thinking process
+- **Confirmation** - Tool approval dialogs
+
+### State Management
+
+1. **ChatProvider context** - AI chat via `useChat` from `@ai-sdk/react`, model selection
 2. **TanStack Query** - Server state caching (configured in QueryProvider)
 3. **Local component state** - Form data, animation state
 
@@ -50,47 +63,48 @@ ChatProvider (expansion state + AI connection)
 
 1. User input → `ChatProvider.sendMessage()` → POST `/api/chat`
 2. API uses `streamText()` with 4 tools: `generateForm`, `generateChart`, `generateCode`, `generateCard`
-3. Tool results become `expandableContent` on messages
-4. New assistant messages with expandable content auto-expand to 'partial' state
-5. Expansion changes trigger Framer Motion animations (250ms expand, 200ms collapse)
+3. Response streamed as `UIMessage` with parts (text, tool-*)
+4. ChatMessage renders each part:
+   - `text` parts → `MessageResponse`
+   - `tool-*` parts → `Tool` component or custom `ExpandableContent`
 
 ### AI Integration
 
-- **Gateway**: Vercel AI Gateway for multi-provider support
-- **Models**: Configurable via model picker (OpenAI, Anthropic, Google)
-- **Transport**: `DefaultChatTransport` from `ai` package (AI SDK v6)
-- **Tools**: Zod-validated schemas in `src/lib/ai/tools.ts` - tools return structured data directly
-- **AI Config**: `src/lib/ai/` contains all AI-related code:
-  - `models.ts` - Model definitions (client-safe)
-  - `models.server.ts` - Model creation with DevTools (server-only)
-  - `tools.ts` - Tool definitions for expandable content
-  - `prompts.ts` - System prompts
+- **Gateway**: Vercel AI Gateway via `gateway()` function for multi-provider routing
+- **Models**: Configurable via model picker:
+  - GPT-5 Nano (default), GPT-5 Mini, GPT-4o Mini, GPT-4o
+  - Claude Sonnet 4
+  - Gemini 2.0 Flash
+- **Chat Hook**: `useChat` from `@ai-sdk/react` with `DefaultChatTransport`
+- **Streaming**: `streamText()` with `toUIMessageStreamResponse()` for SSE
+- **Tools**: Zod-validated schemas returning structured data directly
+- **AI Config** (`src/lib/ai/`):
+  - `models.ts` - Model definitions with `gateway/provider/model` ID format (client-safe)
+  - `models.server.ts` - `createModel()` with optional DevTools middleware (server-only)
+  - `tools.ts` - Tool definitions (`generateForm`, `generateChart`, `generateCode`, `generateCard`)
+  - `prompts.ts` - System prompt for Sequenzia assistant
 
 ### Expandable Content Types
 
-Each type implements 3 display modes (preview/partial/full):
+Each type renders with full content (no preview modes):
 
-| Type  | Schema                   | Partial Display   |
-| ----- | ------------------------ | ----------------- |
-| form  | `FormContentDataSchema`  | First 3 fields    |
-| chart | `ChartContentDataSchema` | 150px height      |
-| code  | `CodeContentDataSchema`  | First 10 lines    |
-| card  | `CardContentDataSchema`  | Truncated content |
+| Type  | Schema                   | Component    |
+| ----- | ------------------------ | ------------ |
+| form  | `FormContentDataSchema`  | FormContent  |
+| chart | `ChartContentDataSchema` | ChartContent |
+| code  | `CodeContentDataSchema`  | CodeContent  |
+| card  | `CardContentDataSchema`  | CardContent  |
 
 ### Theming
 
 CSS custom properties in `globals.css`:
 
 - Base: `--background`, `--foreground`, `--primary`, etc. (shadcn/ui tokens)
-- Message: `--message-user`, `--message-assistant`, `--message-focused`
-- Content: `--form-field`, `--chart-grid`, `--code-background`
+- Message: `--message-user`, `--message-assistant`
+- Content: `--form-field`, `--chart-grid`
+- Semantic: `--success`, `--warning`, `--error`, `--info`
 
 Theme switching via `ThemeProvider` (light/dark/system).
-
-### Key Hooks
-
-- **useExpansion**: Message expansion logic, keyboard nav (Enter/Escape/Cmd+F), double-tap detection
-- **useScrollAnchor**: Anchor-based scrolling during expansions, auto-scroll to bottom
 
 ### Environment
 
