@@ -36,73 +36,51 @@ Sequenzia AI is a Next.js chat application implementing the **Expanding Message 
 
 ## Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              Browser (Client)                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                         RootLayout                                   │    │
-│  │  ┌───────────────────────────────────────────────────────────────┐  │    │
-│  │  │                      ThemeProvider                            │  │    │
-│  │  │  ┌─────────────────────────────────────────────────────────┐  │  │    │
-│  │  │  │                    QueryProvider                        │  │  │    │
-│  │  │  │  ┌───────────────────────────────────────────────────┐  │  │  │    │
-│  │  │  │  │                  ChatProvider                     │  │  │  │    │
-│  │  │  │  │  ┌─────────────────────────────────────────────┐  │  │  │  │    │
-│  │  │  │  │  │              Page Layout                    │  │  │  │  │    │
-│  │  │  │  │  │  ┌────────────────────────────────────────┐ │  │  │  │  │    │
-│  │  │  │  │  │  │ Header (ModelPicker + ThemeToggle)     │ │  │  │  │  │    │
-│  │  │  │  │  │  ├────────────────────────────────────────┤ │  │  │  │  │    │
-│  │  │  │  │  │  │ ChatContainer                          │ │  │  │  │  │    │
-│  │  │  │  │  │  │   └─ MessageBubble[]                   │ │  │  │  │  │    │
-│  │  │  │  │  │  │        └─ ExpandableContent            │ │  │  │  │  │    │
-│  │  │  │  │  │  │             ├─ FormContent             │ │  │  │  │  │    │
-│  │  │  │  │  │  │             ├─ ChartContent            │ │  │  │  │  │    │
-│  │  │  │  │  │  │             ├─ CodeContent             │ │  │  │  │  │    │
-│  │  │  │  │  │  │             └─ CardContent             │ │  │  │  │  │    │
-│  │  │  │  │  │  ├────────────────────────────────────────┤ │  │  │  │  │    │
-│  │  │  │  │  │  │ InputComposer                          │ │  │  │  │  │    │
-│  │  │  │  │  │  └────────────────────────────────────────┘ │  │  │  │  │    │
-│  │  │  │  │  └─────────────────────────────────────────────┘  │  │  │  │    │
-│  │  │  │  └───────────────────────────────────────────────────┘  │  │  │    │
-│  │  │  └─────────────────────────────────────────────────────────┘  │  │    │
-│  │  └───────────────────────────────────────────────────────────────┘  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      │ HTTP POST /api/chat
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              Server (API Route)                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                    /api/chat/route.ts                               │    │
-│  │                                                                      │    │
-│  │  1. Receive messages + modelId                                       │    │
-│  │  2. Convert UIMessage[] → ModelMessage[]                             │    │
-│  │  3. Call streamText() with:                                          │    │
-│  │     - Vercel AI Gateway provider                                     │    │
-│  │     - System prompt                                                  │    │
-│  │     - 4 Tools (generateForm, generateChart, generateCode, generateCard)│   │
-│  │  4. Return streaming response                                        │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                      │                                       │
-└──────────────────────────────────────│───────────────────────────────────────┘
-                                       │
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          Vercel AI Gateway                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Routes to appropriate provider based on modelId:                            │
-│    - openai/gpt-5-nano → OpenAI                                             │
-│    - openai/gpt-4o-mini → OpenAI                                            │
-│    - openai/gpt-4o → OpenAI                                                 │
-│    - anthropic/claude-sonnet-4 → Anthropic                                  │
-│    - google/gemini-2.0-flash → Google                                       │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Browser["Browser (Client)"]
+        subgraph RootLayout
+            subgraph ThemeProvider
+                subgraph QueryProvider
+                    subgraph ChatProvider
+                        subgraph PageLayout["Page Layout"]
+                            Header["Header (ModelPicker + ThemeToggle)"]
+                            subgraph ChatContainer
+                                MessageBubble["MessageBubble[]"]
+                                subgraph ExpandableContent
+                                    FormContent
+                                    ChartContent
+                                    CodeContent
+                                    CardContent
+                                end
+                            end
+                            InputComposer
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    subgraph Server["Server (API Route)"]
+        APIRoute["/api/chat/route.ts"]
+        Step1["1. Receive messages + modelId"]
+        Step2["2. Convert UIMessage[] → ModelMessage[]"]
+        Step3["3. Call streamText() with tools"]
+        Step4["4. Return streaming response"]
+    end
+
+    subgraph Gateway["Vercel AI Gateway"]
+        Router["Routes based on modelId"]
+        OpenAI["openai/* → OpenAI"]
+        Anthropic["anthropic/* → Anthropic"]
+        Google["google/* → Google"]
+    end
+
+    Browser -->|"HTTP POST /api/chat"| Server
+    Server --> Gateway
+
+    MessageBubble --> ExpandableContent
 ```
 
 ---
@@ -111,28 +89,29 @@ Sequenzia AI is a Next.js chat application implementing the **Expanding Message 
 
 ### 1. Server-Side Rendering (layout.tsx)
 
-```
-RootLayout
-├── Load Google Fonts (Geist Sans, Geist Mono)
-├── Set metadata (title, description)
-└── Render:
-    └── <html>
-        └── <body>
-            └── ThemeProvider (defaultTheme="system")
-                └── QueryProvider
-                    └── {children}
-                    └── Toaster (sonner)
+```mermaid
+graph TD
+    RootLayout --> LoadFonts["Load Google Fonts<br/>(Geist Sans, Geist Mono)"]
+    RootLayout --> SetMeta["Set metadata<br/>(title, description)"]
+    RootLayout --> Render
+
+    Render --> HTML["&lt;html&gt;"]
+    HTML --> Body["&lt;body&gt;"]
+    Body --> ThemeProvider["ThemeProvider<br/>(defaultTheme='system')"]
+    ThemeProvider --> QueryProvider
+    QueryProvider --> Children["{children}"]
+    QueryProvider --> Toaster["Toaster (sonner)"]
 ```
 
 ### 2. Client-Side Hydration (page.tsx)
 
-```
-Home (Client Component)
-└── ChatProvider
-    └── <div> (flex container, h-screen)
-        ├── Header
-        ├── ChatContainer (flex-1)
-        └── InputComposer
+```mermaid
+graph TD
+    Home["Home (Client Component)"] --> ChatProvider
+    ChatProvider --> Container["&lt;div&gt; (flex container, h-screen)"]
+    Container --> Header
+    Container --> ChatContainer["ChatContainer (flex-1)"]
+    Container --> InputComposer
 ```
 
 ### 3. Provider Initialization
@@ -148,109 +127,42 @@ Home (Client Component)
 
 ## Message Flow
 
-### Step-by-Step: User Sends a Message
+For comprehensive documentation on message flow, tool calling, and the AI SDK integration, see **[Message Flow Architecture](./message-flow.md)**.
 
-```
-1. USER INPUT
-   ┌─────────────────┐
-   │ InputComposer   │
-   │ - User types    │
-   │ - Presses Enter │
-   └────────┬────────┘
-            │
-            ▼
-2. MESSAGE DISPATCH
-   ┌──────────────────────────────┐
-   │ ChatProvider.sendMessage()  │
-   │ - Calls aiSendMessage()     │
-   │ - Includes modelId in body  │
-   └────────┬─────────────────────┘
-            │
-            ▼
-3. CLIENT TRANSPORT
-   ┌──────────────────────────────┐
-   │ DefaultChatTransport        │
-   │ - POST to /api/chat         │
-   │ - Body: { messages, modelId }│
-   └────────┬─────────────────────┘
-            │
-            ▼
-4. API ROUTE PROCESSING
-   ┌──────────────────────────────────┐
-   │ /api/chat/route.ts              │
-   │ a. Parse request body           │
-   │ b. Validate modelId             │
-   │ c. Convert UIMessage→ModelMessage│
-   │ d. Call streamText() with tools │
-   └────────┬─────────────────────────┘
-            │
-            ▼
-5. AI RESPONSE STREAMING
-   ┌──────────────────────────────────┐
-   │ Vercel AI Gateway               │
-   │ - Routes to provider            │
-   │ - Streams text + tool calls     │
-   └────────┬─────────────────────────┘
-            │
-            ▼
-6. RESPONSE PROCESSING
-   ┌────────────────────────────────────────┐
-   │ ChatProvider (useAIChat)              │
-   │ a. Receives streaming chunks          │
-   │ b. Updates aiMessages state           │
-   │ c. Transforms to Message[] via useMemo│
-   │ d. Parses tool results → expandableContent│
-   └────────┬───────────────────────────────┘
-            │
-            ▼
-7. AUTO-EXPANSION (useEffect)
-   ┌────────────────────────────────────────┐
-   │ If message has expandableContent and  │
-   │ no expansion state exists:            │
-   │ → Set to 'partial' state              │
-   └────────┬───────────────────────────────┘
-            │
-            ▼
-8. UI RENDER
-   ┌────────────────────────────────────────┐
-   │ ChatContainer                         │
-   │ └─ MessageBubble (with animation)     │
-   │     └─ ExpandableContent              │
-   │         └─ FormContent/ChartContent/  │
-   │            CodeContent/CardContent    │
-   └───────────────────────────────────────┘
+### Quick Overview
+
+```mermaid
+flowchart LR
+    Input["User Input"] --> Transport["Transport"]
+    Transport --> API["API Route"]
+    API --> Gateway["AI Gateway"]
+    Gateway --> Stream["Stream Response"]
+    Stream --> Parse["Parse & Transform"]
+    Parse --> Render["Render UI"]
 ```
 
-### Message Type Transformation
+| Stage | Key Component | Purpose |
+|-------|---------------|---------|
+| Input | InputComposer | Capture user message |
+| Transport | DefaultChatTransport | POST to /api/chat |
+| API | /api/chat/route.ts | Process + call AI with tools |
+| Gateway | Vercel AI Gateway | Route to AI provider |
+| Stream | useAIChat | Receive SSE chunks |
+| Parse | ChatProvider | Transform to Message[] |
+| Render | MessageBubble | Display with animations |
 
-```typescript
-// 1. AI SDK UIMessage (from useAIChat)
-{
-  id: "msg-1",
-  role: "assistant",
-  parts: [
-    { type: "text", text: "Here's a chart..." },
-    { type: "tool-generateChart", toolCallId: "tc-1", input: {...}, output: {...} }
-  ]
-}
+### Tool Calling
 
-// 2. Transformed to Message (internal type)
-{
-  id: "msg-1",
-  role: "assistant",
-  content: "Here's a chart...",
-  timestamp: "2024-01-15T10:30:00Z",
-  expandableContent: {
-    type: "chart",
-    chartType: "bar",
-    title: "Sales Data",
-    data: [...],
-    xKey: "month",
-    yKey: "sales"
-  },
-  toolInvocations: [...]
-}
-```
+The API provides four tools for generating interactive content:
+
+| Tool | Output | Use Case |
+|------|--------|----------|
+| `generateForm` | Interactive form | Data collection, settings |
+| `generateChart` | Data visualization | Trends, comparisons |
+| `generateCode` | Code block | Code snippets with syntax highlighting |
+| `generateCard` | Rich content card | Articles, products, profiles |
+
+See [Message Flow Architecture](./message-flow.md) for detailed tool schemas, execution flow, and the complete message transformation pipeline.
 
 ---
 
@@ -260,53 +172,34 @@ Home (Client Component)
 
 Messages with expandable content exist in one of four states:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      EXPANSION STATES                            │
-├─────────────┬─────────────┬─────────────┬───────────────────────┤
-│  collapsed  │   partial   │  expanded   │       focused         │
-├─────────────┼─────────────┼─────────────┼───────────────────────┤
-│ Icon+Title  │ Preview     │ Full        │ Full + backdrop blur  │
-│ only        │ (limited)   │ content     │ + scale 1.02          │
-│             │             │             │ + ring highlight      │
-├─────────────┼─────────────┼─────────────┼───────────────────────┤
-│ Form: badge │ 3 fields    │ All fields  │ All + submit enabled  │
-│ Chart: icon │ 150px       │ 300px       │ 300px + legend        │
-│ Code: lang  │ 10 lines    │ All lines   │ All + stats           │
-│ Card: title │ Truncated   │ Full + media│ Full + actions        │
-└─────────────┴─────────────┴─────────────┴───────────────────────┘
-```
+| State | Description |
+|-------|-------------|
+| **collapsed** | Icon + title only |
+| **partial** | Preview (limited content) |
+| **expanded** | Full content |
+| **focused** | Full + backdrop blur + scale 1.02 + ring highlight |
+
+**Content Display by State:**
+
+| Content Type | collapsed | partial | expanded | focused |
+|--------------|-----------|---------|----------|---------|
+| **Form** | badge | 3 fields | All fields | All + submit enabled |
+| **Chart** | icon | 150px | 300px | 300px + legend |
+| **Code** | lang | 10 lines | All lines | All + stats |
+| **Card** | title | Truncated | Full + media | Full + actions |
 
 ### State Transitions
 
-```
-                    ┌──────────────────────┐
-                    │                      │
-                    ▼                      │
-              ┌──────────┐                 │
-              │ collapsed │◄───────────────┤
-              └────┬─────┘                 │
-                   │ click/Enter           │
-                   ▼                       │
-              ┌──────────┐                 │
-              │ partial  │─────────────────┤
-              └────┬─────┘                 │
-                   │ click/Enter           │
-                   ▼                       │
-              ┌──────────┐                 │
-              │ expanded │─────────────────┘
-              └────┬─────┘     click/Enter
-                   │
-                   │ Cmd+F
-                   ▼
-              ┌──────────┐
-              │ focused  │
-              └────┬─────┘
-                   │ Escape/Cmd+F
-                   ▼
-              ┌──────────┐
-              │ expanded │
-              └──────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> collapsed
+
+    collapsed --> partial : click/Enter
+    partial --> expanded : click/Enter
+    expanded --> collapsed : click/Enter
+
+    expanded --> focused : Cmd+F
+    focused --> expanded : Escape/Cmd+F
 ```
 
 ### Expansion State Management
@@ -356,39 +249,40 @@ if (timeSinceLastClick < 300) {
 
 ### Full Component Tree
 
-```
-App
-└── RootLayout (layout.tsx)
-    ├── ThemeProvider
-    │   └── Provides: theme, resolvedTheme, setTheme, highContrast
-    └── QueryProvider
-        └── Provides: TanStack Query client
-            └── Home (page.tsx)
-                └── ChatProvider
-                    ├── Provides: messages, isLoading, sendMessage, expansionStates, etc.
-                    └── Layout Container
-                        ├── Header
-                        │   ├── Logo
-                        │   ├── ModelPicker (Select dropdown)
-                        │   └── ThemeDropdown (light/dark/system)
-                        │
-                        ├── ChatContainer
-                        │   ├── Focus Overlay (when focusedMessageId exists)
-                        │   ├── EmptyState (when no messages)
-                        │   ├── MessageBubble[] (mapped from messages)
-                        │   │   ├── Avatar
-                        │   │   ├── Bubble (text + expandable content)
-                        │   │   │   └── ExpandableContent
-                        │   │   │       ├── FormContent
-                        │   │   │       ├── ChartContent
-                        │   │   │       ├── CodeContent
-                        │   │   │       └── CardContent
-                        │   │   └── Action buttons (copy, regenerate, focus)
-                        │   └── LoadingDots (when isLoading)
-                        │
-                        └── InputComposer
-                            ├── Textarea (auto-resize)
-                            └── Submit Button (animated)
+```mermaid
+graph TD
+    App --> RootLayout["RootLayout (layout.tsx)"]
+    RootLayout --> ThemeProvider
+    ThemeProvider --> ThemeProvides["Provides: theme, resolvedTheme,<br/>setTheme, highContrast"]
+    RootLayout --> QueryProvider
+    QueryProvider --> QueryProvides["Provides: TanStack Query client"]
+    QueryProvider --> Home["Home (page.tsx)"]
+    Home --> ChatProvider
+    ChatProvider --> ChatProvides["Provides: messages, isLoading,<br/>sendMessage, expansionStates, etc."]
+    ChatProvider --> LayoutContainer["Layout Container"]
+
+    LayoutContainer --> Header
+    Header --> Logo
+    Header --> ModelPicker["ModelPicker (Select dropdown)"]
+    Header --> ThemeDropdown["ThemeDropdown (light/dark/system)"]
+
+    LayoutContainer --> ChatContainer
+    ChatContainer --> FocusOverlay["Focus Overlay<br/>(when focusedMessageId exists)"]
+    ChatContainer --> EmptyState["EmptyState<br/>(when no messages)"]
+    ChatContainer --> MessageBubble["MessageBubble[]<br/>(mapped from messages)"]
+    MessageBubble --> Avatar
+    MessageBubble --> Bubble["Bubble (text + expandable content)"]
+    Bubble --> ExpandableContent
+    ExpandableContent --> FormContent
+    ExpandableContent --> ChartContent
+    ExpandableContent --> CodeContent
+    ExpandableContent --> CardContent
+    MessageBubble --> ActionButtons["Action buttons<br/>(copy, regenerate, focus)"]
+    ChatContainer --> LoadingDots["LoadingDots<br/>(when isLoading)"]
+
+    LayoutContainer --> InputComposer
+    InputComposer --> Textarea["Textarea (auto-resize)"]
+    InputComposer --> SubmitButton["Submit Button (animated)"]
 ```
 
 ### Component Responsibilities
@@ -412,60 +306,41 @@ App
 
 ### Three Layers of State
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│ Layer 1: ChatProvider Context (Global Chat State)                │
-├───────────────────────────────────────────────────────────────────┤
-│ • messages: Message[]           (transformed from AI SDK)        │
-│ • isLoading: boolean            (derived from status)            │
-│ • error: Error | null                                            │
-│ • expansionStates: Map<string, ExpansionStateData>               │
-│ • modelId: string               (current selected model)         │
-│ • focusedMessageId: string | null                                │
-│                                                                   │
-│ Actions:                                                          │
-│ • sendMessage(content)                                           │
-│ • regenerateLastMessage()                                        │
-│ • clearMessages()                                                │
-│ • stop()                                                         │
-│ • setModelId(id)                                                 │
-│ • toggleExpansion(messageId)                                     │
-│ • focusMessage(messageId)                                        │
-│ • unfocusMessage(messageId)                                      │
-│ • pinMessage(messageId, pinned)                                  │
-│ • collapseAll(except?)                                           │
-└───────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Layer1["Layer 1: ChatProvider Context"]
+    Layer2["Layer 2: TanStack Query"]
+    Layer3["Layer 3: Local Component State"]
 
-┌───────────────────────────────────────────────────────────────────┐
-│ Layer 2: TanStack Query (Server State)                           │
-├───────────────────────────────────────────────────────────────────┤
-│ • staleTime: 60s                                                 │
-│ • gcTime: 5min                                                   │
-│ • refetchOnWindowFocus: false                                    │
-│ • retry: 1                                                       │
-│                                                                   │
-│ (Currently minimal usage - prepared for future API caching)      │
-└───────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────┐
-│ Layer 3: Local Component State                                   │
-├───────────────────────────────────────────────────────────────────┤
-│ InputComposer:                                                   │
-│ • message: string (current input text)                           │
-│                                                                   │
-│ FormContent:                                                     │
-│ • formData: Record<string, value> (field values)                 │
-│ • submitted: boolean                                             │
-│                                                                   │
-│ CodeContent:                                                     │
-│ • copied: boolean (copy feedback state)                          │
-│                                                                   │
-│ ThemeProvider:                                                   │
-│ • theme: 'light' | 'dark' | 'system'                            │
-│ • resolvedTheme: 'light' | 'dark'                               │
-│ • highContrast: boolean                                          │
-└───────────────────────────────────────────────────────────────────┘
+    Layer1 --> Layer2 --> Layer3
 ```
+
+**Layer 1: ChatProvider Context (Global Chat State)**
+
+| Category | Properties |
+|----------|------------|
+| **State** | `messages`, `isLoading`, `error`, `expansionStates`, `modelId`, `focusedMessageId` |
+| **Actions** | `sendMessage()`, `regenerateLastMessage()`, `clearMessages()`, `stop()`, `setModelId()`, `toggleExpansion()`, `focusMessage()`, `unfocusMessage()`, `pinMessage()`, `collapseAll()` |
+
+**Layer 2: TanStack Query (Server State)**
+
+| Setting | Value |
+|---------|-------|
+| staleTime | 60s |
+| gcTime | 5min |
+| refetchOnWindowFocus | false |
+| retry | 1 |
+
+*Currently minimal usage - prepared for future API caching.*
+
+**Layer 3: Local Component State**
+
+| Component | State |
+|-----------|-------|
+| InputComposer | `message: string` |
+| FormContent | `formData: Record<string, value>`, `submitted: boolean` |
+| CodeContent | `copied: boolean` |
+| ThemeProvider | `theme`, `resolvedTheme`, `highContrast` |
 
 ---
 
@@ -503,24 +378,19 @@ StreamingTextResponse (SSE)
 
 ### Tool Execution Flow
 
-```
-AI Model
-    │
-    ├─► "I'll create a form for you"  (text)
-    │
-    └─► tool-call: generateForm       (tool invocation)
-            │
-            ▼
-        Tool Execute (passthrough)
-            │
-            ▼
-        tool-result: { type: 'form', ... }
-            │
-            ▼
-        Parsed as expandableContent
-            │
-            ▼
-        Rendered as FormContent
+```mermaid
+flowchart TD
+    AIModel["AI Model"]
+    Text["'I'll create a form for you' (text)"]
+    ToolCall["tool-call: generateForm (tool invocation)"]
+    Execute["Tool Execute (passthrough)"]
+    Result["tool-result: { type: 'form', ... }"]
+    Parsed["Parsed as expandableContent"]
+    Rendered["Rendered as FormContent"]
+
+    AIModel --> Text
+    AIModel --> ToolCall
+    ToolCall --> Execute --> Result --> Parsed --> Rendered
 ```
 
 ---
@@ -552,12 +422,12 @@ AI Model
 
 ### Theme Switching
 
-```
-1. ThemeProvider reads from localStorage
-2. Resolves 'system' to actual theme via matchMedia
-3. Applies classes to <html>: 'light' | 'dark' | 'high-contrast'
-4. Sets color-scheme CSS property
-5. Listens for system preference changes
+```mermaid
+flowchart LR
+    A["1. ThemeProvider reads<br/>from localStorage"] --> B["2. Resolves 'system' to<br/>actual theme via matchMedia"]
+    B --> C["3. Applies classes to &lt;html&gt;:<br/>'light' | 'dark' | 'high-contrast'"]
+    C --> D["4. Sets color-scheme<br/>CSS property"]
+    D --> E["5. Listens for system<br/>preference changes"]
 ```
 
 ---
@@ -647,3 +517,11 @@ AI Model
 3. **Real-time collaboration**: Not implemented
 4. **Message editing**: Not implemented
 5. **Tool result caching**: TanStack Query configured but minimal usage
+
+---
+
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Message Flow Architecture](./message-flow.md) | Deep-dive into message flow, tool calling, AI SDK integration, and the complete request lifecycle |
