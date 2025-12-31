@@ -1,5 +1,5 @@
-import { streamText, gateway, convertToModelMessages } from "ai";
-import { DEFAULT_MODEL_ID, isValidModelId } from "@/lib/models";
+import { streamText, convertToModelMessages } from "ai";
+import { createModel } from "@/lib/models";
 import { getSystemPrompt } from "@/lib/prompts";
 import { chatTools } from "@/lib/tools";
 
@@ -8,15 +8,13 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   const { messages: uiMessages, modelId } = await req.json();
 
-  const selectedModelId = isValidModelId(modelId) ? modelId : DEFAULT_MODEL_ID;
-  const model = gateway(selectedModelId);
-  const systemPrompt = getSystemPrompt();
+  const model = createModel(modelId);
 
   const messages = await convertToModelMessages(uiMessages);
 
   const result = streamText({
     model,
-    system: systemPrompt,
+    system: getSystemPrompt(),
     messages,
     tools: chatTools,
   });

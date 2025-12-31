@@ -1,3 +1,6 @@
+import { gateway, wrapLanguageModel, type LanguageModel } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+
 export interface Model {
   id: string;
   name: string;
@@ -52,4 +55,15 @@ export function getModelById(id: string): Model | undefined {
 
 export function isValidModelId(id: string): boolean {
   return MODELS.some((model) => model.id === id);
+}
+
+const isDebugEnabled = process.env.AI_DEBUG === "true";
+
+export function createModel(modelId?: string): LanguageModel {
+  const selectedModelId = isValidModelId(modelId ?? "") ? modelId! : DEFAULT_MODEL_ID;
+  const baseModel = gateway(selectedModelId);
+
+  return isDebugEnabled
+    ? wrapLanguageModel({ model: baseModel, middleware: devToolsMiddleware() })
+    : baseModel;
 }

@@ -93,5 +93,16 @@ Theme switching via `ThemeProvider` (light/dark/system).
 Requires `AI_GATEWAY_API_KEY` in `.env.local` for Vercel AI Gateway access.
 
 To set up:
+
 1. Get an API key from the [AI Gateway dashboard](https://vercel.com/ai-gateway)
 2. Create `.env.local` with `AI_GATEWAY_API_KEY=your_key_here`
+
+### Debugging
+
+Set `AI_DEBUG=true` in `.env.local` to enable AI SDK DevTools. When enabled:
+
+1. Run `npx @ai-sdk/devtools` to start the DevTools viewer
+2. Access the web UI at http://localhost:4983
+3. Inspect AI interactions, prompts, and tool calls
+
+**Note**: DevTools stores data locally in plain text. Only use in development.
