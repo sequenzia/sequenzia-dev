@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useChat } from '@/components/chat/ChatProvider';
-import { MODELS, getModelById } from '@/lib/models';
+import { MODELS, getModelById } from '@/lib/ai/models';
 
 export function ModelPicker() {
   const { modelId, setModelId, isLoading } = useChat();
@@ -17,7 +17,7 @@ export function ModelPicker() {
 
   return (
     <Select value={modelId} onValueChange={setModelId} disabled={isLoading}>
-      <SelectTrigger className="w-[180px] h-9">
+      <SelectTrigger className="w-45 h-9">
         <div className="flex items-center gap-2">
           <Bot className="w-4 h-4 text-muted-foreground" />
           <SelectValue>

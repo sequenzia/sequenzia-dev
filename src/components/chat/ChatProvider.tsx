@@ -12,7 +12,7 @@ import {
 import { useChat as useAIChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { Message, ExpansionState, ExpansionStateData, ExpandableContent } from '@/types';
-import { DEFAULT_MODEL_ID } from '@/lib/models';
+import { DEFAULT_MODEL_ID } from '@/lib/ai/models';
 
 // Action types for expansion state reducer
 type ExpansionAction =

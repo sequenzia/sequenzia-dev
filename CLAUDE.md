@@ -59,8 +59,12 @@ ChatProvider (expansion state + AI connection)
 - **Gateway**: Vercel AI Gateway for multi-provider support
 - **Models**: Configurable via model picker (OpenAI, Anthropic, Google)
 - **Transport**: `DefaultChatTransport` from `ai` package (AI SDK v6)
-- **Tools**: Zod-validated schemas in `/api/chat/route.ts` - tools return structured data directly
-- **Model Config**: `/src/lib/models.ts` defines available models
+- **Tools**: Zod-validated schemas in `src/lib/ai/tools.ts` - tools return structured data directly
+- **AI Config**: `src/lib/ai/` contains all AI-related code:
+  - `models.ts` - Model definitions (client-safe)
+  - `models.server.ts` - Model creation with DevTools (server-only)
+  - `tools.ts` - Tool definitions for expandable content
+  - `prompts.ts` - System prompts
 
 ### Expandable Content Types
 

@@ -1,7 +1,7 @@
 import { streamText, convertToModelMessages } from "ai";
-import { createModel } from "@/lib/models";
-import { getSystemPrompt } from "@/lib/prompts";
-import { chatTools } from "@/lib/tools";
+import { createModel } from "@/lib/ai/models.server";
+import { getSystemPrompt } from "@/lib/ai/prompts";
+import { chatTools } from "@/lib/ai/tools";
 
 export const maxDuration = 60;
 
