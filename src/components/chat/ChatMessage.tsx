@@ -19,14 +19,14 @@ import {
   ToolOutput,
 } from '@/components/ai-elements/tool';
 import { useChat } from './ChatProvider';
-import { ExpandableContent } from '@/components/expandable/ExpandableContent';
+import { ContentBlock } from '@/components/blocks/ContentBlock';
 import {
   messageItemUser,
   messageItemAssistant,
   useAnimationConfig,
   springs,
 } from '@/lib/motion';
-import type { ExpandableContent as ExpandableContentType } from '@/types';
+import type { ContentBlock as ContentBlockType } from '@/types';
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -77,20 +77,20 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
             const toolPart = part as unknown as ToolUIPart;
             const toolName = part.type.replace('tool-', '');
 
-            // Check if this is one of our expandable content tools
-            const isExpandableContent = [
+            // Check if this is one of our content block tools
+            const isContentBlock = [
               'generateForm',
               'generateChart',
               'generateCode',
               'generateCard',
             ].includes(toolName);
 
-            if (isExpandableContent && toolPart.state === 'output-available' && toolPart.output) {
-              // Render our custom expandable content
-              const content = toolPart.output as ExpandableContentType;
+            if (isContentBlock && toolPart.state === 'output-available' && toolPart.output) {
+              // Render our custom content block
+              const content = toolPart.output as ContentBlockType;
               return (
                 <div key={`tool-${index}`} className="mt-2">
-                  <ExpandableContent
+                  <ContentBlock
                     content={content}
                     messageId={message.id}
                   />

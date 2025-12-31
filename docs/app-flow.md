@@ -47,7 +47,7 @@ graph TB
                             Header["Header (ModelPicker + ThemeToggle)"]
                             subgraph ChatContainer
                                 MessageBubble["MessageBubble[]"]
-                                subgraph ExpandableContent
+                                subgraph ContentBlock
                                     FormContent
                                     ChartContent
                                     CodeContent
@@ -80,7 +80,7 @@ graph TB
     Browser -->|"HTTP POST /api/chat"| Server
     Server --> Gateway
 
-    MessageBubble --> ExpandableContent
+    MessageBubble --> ContentBlock
 ```
 
 ---
@@ -170,7 +170,7 @@ See [Message Flow Architecture](./message-flow.md) for detailed tool schemas, ex
 
 ### 4-State Model
 
-Messages with expandable content exist in one of four states:
+Messages with content blocks exist in one of four states:
 
 | State | Description |
 |-------|-------------|
@@ -272,11 +272,11 @@ graph TD
     ChatContainer --> MessageBubble["MessageBubble[]<br/>(mapped from messages)"]
     MessageBubble --> Avatar
     MessageBubble --> Bubble["Bubble (text + expandable content)"]
-    Bubble --> ExpandableContent
-    ExpandableContent --> FormContent
-    ExpandableContent --> ChartContent
-    ExpandableContent --> CodeContent
-    ExpandableContent --> CardContent
+    Bubble --> ContentBlock
+    ContentBlock --> FormContent
+    ContentBlock --> ChartContent
+    ContentBlock --> CodeContent
+    ContentBlock --> CardContent
     MessageBubble --> ActionButtons["Action buttons<br/>(copy, regenerate, focus)"]
     ChatContainer --> LoadingDots["LoadingDots<br/>(when isLoading)"]
 
@@ -292,7 +292,7 @@ graph TD
 | `ChatProvider` | Global chat state, AI connection, expansion management |
 | `ChatContainer` | Scroll management, focus overlay, message list |
 | `MessageBubble` | Individual message rendering, expansion UI, animations |
-| `ExpandableContent` | Routes to correct content component based on type |
+| `ContentBlock` | Routes to correct content component based on type |
 | `FormContent` | Interactive form with field rendering, submission |
 | `ChartContent` | Recharts-based visualization (line/bar/pie/area) |
 | `CodeContent` | Syntax highlighted code block with copy |
@@ -385,7 +385,7 @@ flowchart TD
     ToolCall["tool-call: generateForm (tool invocation)"]
     Execute["Tool Execute (passthrough)"]
     Result["tool-result: { type: 'form', ... }"]
-    Parsed["Parsed as expandableContent"]
+    Parsed["Parsed as contentBlock"]
     Rendered["Rendered as FormContent"]
 
     AIModel --> Text
@@ -450,11 +450,11 @@ flowchart LR
 | `src/components/chat/ChatContainer.tsx` | Message list + scroll management |
 | `src/components/chat/MessageBubble.tsx` | Individual message rendering |
 | `src/components/chat/InputComposer.tsx` | Message input |
-| `src/components/expandable/ExpandableContent.tsx` | Content type router |
-| `src/components/expandable/FormContent.tsx` | Interactive forms |
-| `src/components/expandable/ChartContent.tsx` | Data visualizations |
-| `src/components/expandable/CodeContent.tsx` | Code blocks |
-| `src/components/expandable/CardContent.tsx` | Rich content cards |
+| `src/components/blocks/ContentBlock.tsx` | Content type router |
+| `src/components/blocks/FormContent.tsx` | Interactive forms |
+| `src/components/blocks/ChartContent.tsx` | Data visualizations |
+| `src/components/blocks/CodeContent.tsx` | Code blocks |
+| `src/components/blocks/CardContent.tsx` | Rich content cards |
 | `src/components/Header.tsx` | App header with model picker |
 | `src/components/ModelPicker.tsx` | Model selection dropdown |
 
@@ -476,7 +476,7 @@ flowchart LR
 
 | File | Purpose |
 |------|---------|
-| `src/types/message.ts` | Message, expandable content, tool schemas |
+| `src/types/message.ts` | Message, content block, tool schemas |
 | `src/types/conversation.ts` | Conversation types |
 | `src/types/theme.ts` | Theme type definitions |
 

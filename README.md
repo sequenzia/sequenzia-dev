@@ -77,7 +77,7 @@ Messages exist in one of four states:
 ChatProvider (expansion state + AI connection)
 ├── ChatContainer (scroll management)
 │   └── MessageBubble (per-message expansion animation)
-│       └── ExpandableContent (routes to content type)
+│       └── ContentBlock (routes to content type)
 │           ├── FormContent
 │           ├── ChartContent
 │           ├── CodeContent
@@ -109,7 +109,7 @@ src/
 │   └── page.tsx            # Main chat page
 ├── components/
 │   ├── chat/               # Chat components
-│   ├── expandable/         # Expandable content renderers
+│   ├── blocks/             # Content block renderers
 │   ├── providers/          # Context providers
 │   └── ui/                 # shadcn/ui components
 ├── hooks/                  # Custom React hooks

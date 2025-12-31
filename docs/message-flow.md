@@ -12,7 +12,7 @@ This document provides a comprehensive deep-dive into how messages flow through 
 6. [Tool Calling System](#tool-calling-system)
 7. [Response Streaming](#response-streaming)
 8. [Message Transformation Pipeline](#message-transformation-pipeline)
-9. [Expandable Content Parsing](#expandable-content-parsing)
+9. [Content Block Parsing](#content-block-parsing)
 10. [Auto-Expansion System](#auto-expansion-system)
 11. [Rendering Pipeline](#rendering-pipeline)
 12. [Error Handling](#error-handling)
@@ -459,8 +459,8 @@ const messages: Message[] = useMemo(() => {
       }
     })
 
-    // 3. Parse expandable content from tool results
-    const expandableContent = parseExpandableContent(toolInvocations)
+    // 3. Parse content block from tool results
+    const contentBlock = parseContentBlock(toolInvocations)
 
     // 4. Return transformed message
     return {
@@ -468,7 +468,7 @@ const messages: Message[] = useMemo(() => {
       role: msg.role as 'user' | 'assistant',
       content,
       timestamp: new Date().toISOString(),
-      expandableContent,
+      contentBlock,
       toolInvocations: toolInvocations.length > 0 ? toolInvocations : undefined,
     }
   })
@@ -484,7 +484,7 @@ interface Message {
   content: string              // Text content only
   timestamp: string
   attachments?: Attachment[]
-  expandableContent?: ExpandableContent  // Parsed tool result
+  contentBlock?: ContentBlock  // Parsed tool result
   toolInvocations?: ToolInvocation[]     // All tool calls with state
 }
 ```
@@ -508,14 +508,14 @@ interface ToolInvocation {
 
 ---
 
-## Expandable Content Parsing
+## Content Block Parsing
 
 ### Parser Function
 
 ```typescript
-function parseExpandableContent(
+function parseContentBlock(
   toolInvocations?: ToolInvocation[]
-): ExpandableContent | undefined {
+): ContentBlock | undefined {
   if (!toolInvocations?.length) return undefined
 
   // Find first completed tool invocation
@@ -525,7 +525,7 @@ function parseExpandableContent(
 
       // Validate type matches expected content types
       if (['form', 'chart', 'code', 'card'].includes(result.type || '')) {
-        return result as ExpandableContent
+        return result as ContentBlock
       }
     }
   }
@@ -537,7 +537,7 @@ function parseExpandableContent(
 ### Content Type Union
 
 ```typescript
-type ExpandableContent =
+type ContentBlock =
   | FormContentData
   | ChartContentData
   | CodeContentData
@@ -556,7 +556,7 @@ Each type is discriminated by the `type` field:
 
 ### Automatic State Initialization
 
-When a new assistant message arrives with expandable content, it automatically expands to 'partial' state:
+When a new assistant message arrives with a content block, it automatically expands to 'partial' state:
 
 ```typescript
 useEffect(() => {
@@ -564,7 +564,7 @@ useEffect(() => {
 
   if (
     lastMessage?.role === 'assistant' &&
-    lastMessage?.expandableContent &&
+    lastMessage?.contentBlock &&
     !expansionStates.has(lastMessage.id)
   ) {
     dispatchExpansion({
@@ -623,7 +623,7 @@ function MessageBubble({ message }: Props) {
   const expansionData = expansionStates.get(message.id)
   const expansionState = expansionData?.state || 'collapsed'
 
-  const hasExpandableContent = !!message.expandableContent
+  const hasContentBlock = !!message.contentBlock
 
   return (
     <motion.div
@@ -635,17 +635,17 @@ function MessageBubble({ message }: Props) {
       {/* Text content */}
       <p>{message.content}</p>
 
-      {/* Expandable content with animation */}
+      {/* Content block with animation */}
       <AnimatePresence>
-        {hasExpandableContent && expansionState !== 'collapsed' && (
+        {hasContentBlock && expansionState !== 'collapsed' && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
           >
-            <ExpandableContent
-              content={message.expandableContent}
+            <ContentBlock
+              content={message.contentBlock}
               displayMode={getDisplayMode(expansionState)}
             />
           </motion.div>
@@ -671,10 +671,10 @@ function getDisplayMode(state: ExpansionState): DisplayMode {
 
 ### Content Component Routing
 
-**Location:** `src/components/expandable/ExpandableContent.tsx`
+**Location:** `src/components/blocks/ContentBlock.tsx`
 
 ```typescript
-function ExpandableContent({ content, displayMode }: Props) {
+function ContentBlock({ content, displayMode }: Props) {
   switch (content.type) {
     case 'form':
       return <FormContent data={content} displayMode={displayMode} />
@@ -744,11 +744,11 @@ const { error } = useChat()
 | File | Purpose |
 |------|---------|
 | `src/components/chat/MessageBubble.tsx` | Message display, expansion animation |
-| `src/components/expandable/ExpandableContent.tsx` | Content type routing |
-| `src/components/expandable/FormContent.tsx` | Interactive form rendering |
-| `src/components/expandable/ChartContent.tsx` | Chart visualization |
-| `src/components/expandable/CodeContent.tsx` | Code block rendering |
-| `src/components/expandable/CardContent.tsx` | Rich card display |
+| `src/components/blocks/ContentBlock.tsx` | Content type routing |
+| `src/components/blocks/FormContent.tsx` | Interactive form rendering |
+| `src/components/blocks/ChartContent.tsx` | Chart visualization |
+| `src/components/blocks/CodeContent.tsx` | Code block rendering |
+| `src/components/blocks/CardContent.tsx` | Rich card display |
 
 ### Configuration
 
@@ -772,9 +772,9 @@ const { error } = useChat()
 9. **Stream response** sent back via SSE
 10. **useAIChat** processes stream chunks
 11. **ChatProvider** transforms to Message[] with memoization
-12. **parseExpandableContent()** extracts tool results
+12. **parseContentBlock()** extracts tool results
 13. **Auto-expansion** sets new content to 'partial' state
 14. **MessageBubble** renders with Framer Motion animations
-15. **ExpandableContent** routes to appropriate content component
+15. **ContentBlock** routes to appropriate content component
 16. **User interacts** with expansion controls or form submission
 17. **Form submission** triggers new message, cycle repeats

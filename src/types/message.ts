@@ -32,7 +32,7 @@ export const FormFieldSchema = z.object({
   step: z.number().optional(),
 });
 
-// Expandable Content Types
+// Content Block Types
 export interface FormContentData {
   type: 'form';
   title: string;
@@ -133,14 +133,14 @@ export const CardContentDataSchema = z.object({
   })).optional(),
 });
 
-// Union of all expandable content types
-export type ExpandableContent =
+// Union of all content block types
+export type ContentBlock =
   | FormContentData
   | ChartContentData
   | CodeContentData
   | CardContentData;
 
-export const ExpandableContentSchema = z.discriminatedUnion('type', [
+export const ContentBlockSchema = z.discriminatedUnion('type', [
   FormContentDataSchema,
   ChartContentDataSchema,
   CodeContentDataSchema,
@@ -172,7 +172,7 @@ export interface Message {
   content: string;
   timestamp: string;
   attachments?: Attachment[];
-  expandableContent?: ExpandableContent;
+  contentBlock?: ContentBlock;
   toolInvocations?: ToolInvocation[];
 }
 

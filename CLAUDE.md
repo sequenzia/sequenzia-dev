@@ -32,7 +32,7 @@ Sequenzia AI is a chat interface built on Vercel's AI Elements component library
 ChatProvider (AI connection via useChat)
 ├── ChatContainer (Conversation component with scroll management)
 │   └── ChatMessage (Message + Tool components)
-│       └── ExpandableContent (routes to content type)
+│       └── ContentBlock (routes to content type)
 │           ├── FormContent
 │           ├── ChartContent
 │           ├── CodeContent (uses AI Elements CodeBlock)
@@ -66,7 +66,7 @@ Located in `src/components/ai-elements/`:
 3. Response streamed as `UIMessage` with parts (text, tool-*)
 4. ChatMessage renders each part:
    - `text` parts → `MessageResponse`
-   - `tool-*` parts → `Tool` component or custom `ExpandableContent`
+   - `tool-*` parts → `Tool` component or custom `ContentBlock`
 
 ### AI Integration
 
@@ -84,7 +84,7 @@ Located in `src/components/ai-elements/`:
   - `tools.ts` - Tool definitions (`generateForm`, `generateChart`, `generateCode`, `generateCard`)
   - `prompts.ts` - System prompt for Sequenzia assistant
 
-### Expandable Content Types
+### Content Block Types
 
 Each type renders with full content (no preview modes):
 

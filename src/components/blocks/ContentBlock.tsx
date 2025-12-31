@@ -5,17 +5,17 @@ import { FormContent } from './FormContent';
 import { ChartContent } from './ChartContent';
 import { CodeContent } from './CodeContent';
 import { CardContent } from './CardContent';
-import type { ExpandableContent as ExpandableContentType } from '@/types';
+import type { ContentBlock as ContentBlockType } from '@/types';
 
-interface ExpandableContentProps {
-  content: ExpandableContentType;
+interface ContentBlockProps {
+  content: ContentBlockType;
   messageId: string;
 }
 
-export const ExpandableContent = memo(function ExpandableContent({
+export const ContentBlock = memo(function ContentBlock({
   content,
   messageId,
-}: ExpandableContentProps) {
+}: ContentBlockProps) {
   switch (content.type) {
     case 'form':
       return <FormContent content={content} messageId={messageId} />;

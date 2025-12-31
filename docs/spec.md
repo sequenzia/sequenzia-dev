@@ -62,7 +62,7 @@ The application follows a layered architecture that separates concerns while ena
 
 #### 3.2.1 Presentation Layer
 
-The presentation layer consists of React components organized around the expanding message paradigm. The primary components include a ChatContainer that manages the conversation viewport, MessageBubble components that handle expansion state and transitions, and specialized ExpandableContent components for each type of interactive element the AI can generate.
+The presentation layer consists of React components organized around the expanding message paradigm. The primary components include a ChatContainer that manages the conversation viewport, MessageBubble components that handle expansion state and transitions, and specialized ContentBlock components for each type of interactive element the AI can generate.
 
 #### 3.2.2 State Management Layer
 
@@ -205,7 +205,7 @@ The component structure reflects the expanding message paradigm, with clear sepa
 | _ChatProvider_      | Context provider managing conversation state, AI connection, and global expansion coordination |
 | _ChatContainer_     | Viewport management, scroll behavior, and message list rendering                               |
 | _MessageBubble_     | Individual message wrapper handling expansion state, animations, and content delegation        |
-| _ExpandableContent_ | Abstract base for all expandable content types with shared transition logic                    |
+| _ContentBlock_      | Abstract base for all content block types with shared transition logic                         |
 | _FormContent_       | Generated form rendering with validation, submission, and field management                     |
 | _ChartContent_      | Data visualization rendering with interactive capabilities                                     |
 | _CodeContent_       | Code display and editing with syntax highlighting and tooling                                  |
@@ -240,11 +240,11 @@ Messages are the fundamental data unit, representing both user input and AI resp
 - **content:** Text content of the message
 - **timestamp:** ISO 8601 creation timestamp
 - **attachments:** Array of file references for user uploads
-- **expandableContent:** Optional structured content for interactive elements
+- **contentBlock:** Optional structured content for interactive elements
 
-#### 8.1.2 Expandable Content Types
+#### 8.1.2 Content Block Types
 
-The expandableContent field contains a discriminated union based on the type field, with each type having its own schema for the associated data.
+The contentBlock field contains a discriminated union based on the type field, with each type having its own schema for the associated data.
 
 - **form:** Schema defining fields, validation rules, and submission behavior
 - **chart:** Visualization specification with data, chart type, and configuration
@@ -284,7 +284,7 @@ The AI can invoke tools to gather information or perform actions. Tool calls are
 
 ### 9.2 UI Generation Protocol
 
-When the AI generates interactive UI elements, it returns structured data conforming to the expandableContent schemas. This data is parsed and validated on the client before being passed to the appropriate content renderer.
+When the AI generates interactive UI elements, it returns structured data conforming to the contentBlock schemas. This data is parsed and validated on the client before being passed to the appropriate content renderer.
 
 #### 9.2.1 Form Generation
 
@@ -584,7 +584,7 @@ When the user has `prefers-reduced-motion: reduce` enabled, animation durations 
 
 **Anchor-Based Scrolling:** Viewport management technique that maintains a reference point's screen position during content changes.
 
-**Expandable Content:** Structured data representing interactive elements the AI can generate within messages.
+**Content Block:** Structured data representing interactive elements the AI can generate within messages.
 
 **Tool Call:** An AI-initiated function invocation to gather information or perform actions.
 
