@@ -1,10 +1,11 @@
 'use client';
 
 import { memo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useChat } from '@/components/chat/ChatProvider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { cardEntrance, useAnimationConfig, springs } from '@/lib/motion';
 import type { CardContentData } from '@/types';
 
 interface CardContentProps {
@@ -16,6 +17,7 @@ export const CardContent = memo(function CardContent({
   content,
 }: CardContentProps) {
   const { sendMessage } = useChat();
+  const { hoverGesture, tapGesture } = useAnimationConfig();
 
   const handleAction = useCallback(
     (action: string) => {
@@ -26,8 +28,9 @@ export const CardContent = memo(function CardContent({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial="hidden"
+      animate="visible"
+      variants={cardEntrance}
       onClick={(e) => e.stopPropagation()}
       className={cn(
         'rounded-lg border border-border overflow-hidden',
@@ -72,18 +75,24 @@ export const CardContent = memo(function CardContent({
           </div>
         )}
 
-        {/* Actions */}
+        {/* Actions with gesture feedback */}
         {content.actions && content.actions.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
             {content.actions.map((action, index) => (
-              <Button
+              <motion.div
                 key={index}
-                variant={action.variant || 'default'}
-                size="sm"
-                onClick={() => handleAction(action.action)}
+                whileHover={hoverGesture}
+                whileTap={tapGesture}
+                transition={springs.snappy}
               >
-                {action.label}
-              </Button>
+                <Button
+                  variant={action.variant || 'default'}
+                  size="sm"
+                  onClick={() => handleAction(action.action)}
+                >
+                  {action.label}
+                </Button>
+              </motion.div>
             ))}
           </div>
         )}

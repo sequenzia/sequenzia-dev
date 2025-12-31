@@ -1,11 +1,13 @@
 "use client";
 
+import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowDownIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useCallback } from "react";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
+import { scrollButtonVariants, useAnimationConfig, springs } from "@/lib/motion";
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
 
@@ -75,26 +77,41 @@ export const ConversationScrollButton = ({
   ...props
 }: ConversationScrollButtonProps) => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
+  const { hoverGesture, tapGesture } = useAnimationConfig();
 
   const handleScrollToBottom = useCallback(() => {
     scrollToBottom();
   }, [scrollToBottom]);
 
   return (
-    !isAtBottom && (
-      <Button
-        className={cn(
-          "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full",
-          className
-        )}
-        onClick={handleScrollToBottom}
-        size="icon"
-        type="button"
-        variant="outline"
-        {...props}
-      >
-        <ArrowDownIcon className="size-4" />
-      </Button>
-    )
+    <AnimatePresence>
+      {!isAtBottom && (
+        <motion.div
+          key="scroll-button"
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          variants={scrollButtonVariants}
+          className="absolute bottom-4 left-[50%] translate-x-[-50%]"
+        >
+          <motion.div
+            whileHover={hoverGesture}
+            whileTap={tapGesture}
+            transition={springs.snappy}
+          >
+            <Button
+              className={cn("rounded-full", className)}
+              onClick={handleScrollToBottom}
+              size="icon"
+              type="button"
+              variant="outline"
+              {...props}
+            >
+              <ArrowDownIcon className="size-4" />
+            </Button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

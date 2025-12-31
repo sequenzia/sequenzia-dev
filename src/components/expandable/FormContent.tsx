@@ -1,14 +1,21 @@
 'use client';
 
 import { memo, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useChat } from '@/components/chat/ChatProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import {
+  springs,
+  formFieldContainer,
+  formField,
+  successBounce,
+  checkmarkDraw,
+  useAnimationConfig,
+} from '@/lib/motion';
 import type { FormContentData, FormField } from '@/types';
 
 interface FormContentProps {
@@ -22,6 +29,7 @@ export const FormContent = memo(function FormContent({
   const { sendMessage } = useChat();
   const [formData, setFormData] = useState<Record<string, string | number | boolean>>({});
   const [submitted, setSubmitted] = useState(false);
+  const { hoverGesture, tapGesture } = useAnimationConfig();
 
   const handleFieldChange = useCallback(
     (fieldId: string, value: string | number | boolean) => {
@@ -52,12 +60,29 @@ export const FormContent = memo(function FormContent({
   if (submitted) {
     return (
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial="hidden"
+        animate="visible"
+        variants={successBounce}
         className="flex flex-col items-center justify-center py-6 text-center"
       >
         <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
-          <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <motion.svg
+            className="w-6 h-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <motion.path
+              d="M5 13l4 4L19 7"
+              className="text-green-600 dark:text-green-400"
+              initial="hidden"
+              animate="visible"
+              variants={checkmarkDraw}
+            />
+          </motion.svg>
         </div>
         <h4 className="font-medium mb-1">Form Submitted</h4>
         <p className="text-sm text-muted-foreground">
@@ -69,30 +94,26 @@ export const FormContent = memo(function FormContent({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial="hidden"
+      animate="visible"
+      variants={formFieldContainer}
       onClick={(e) => e.stopPropagation()}
       className="space-y-4 rounded-lg border bg-card p-4"
     >
       {/* Header */}
-      <div>
+      <motion.div variants={formField}>
         <h4 className="font-medium text-base">{content.title}</h4>
         {content.description && (
           <p className="text-sm text-muted-foreground mt-1">
             {content.description}
           </p>
         )}
-      </div>
+      </motion.div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {content.fields.map((field, index) => (
-          <motion.div
-            key={field.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
+        {content.fields.map((field) => (
+          <motion.div key={field.id} variants={formField}>
             <FormFieldRenderer
               field={field}
               value={formData[field.id]}
@@ -101,10 +122,16 @@ export const FormContent = memo(function FormContent({
           </motion.div>
         ))}
 
-        {/* Submit button */}
-        <Button type="submit" className="w-full">
-          {content.submitLabel || 'Submit'}
-        </Button>
+        {/* Submit button with gesture feedback */}
+        <motion.div
+          whileHover={hoverGesture}
+          whileTap={tapGesture}
+          transition={springs.snappy}
+        >
+          <Button type="submit" className="w-full">
+            {content.submitLabel || 'Submit'}
+          </Button>
+        </motion.div>
       </form>
     </motion.div>
   );

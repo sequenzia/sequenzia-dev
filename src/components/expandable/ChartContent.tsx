@@ -1,8 +1,9 @@
 'use client';
 
 import { memo, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { TrendingUp } from 'lucide-react';
+import { chartEntrance } from '@/lib/motion';
 import {
   ChartConfig,
   ChartContainer,
@@ -57,8 +58,9 @@ export const ChartContent = memo(function ChartContent({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial="hidden"
+      animate="visible"
+      variants={chartEntrance}
       onClick={(e) => e.stopPropagation()}
       className="space-y-3 rounded-lg border bg-card p-4"
     >

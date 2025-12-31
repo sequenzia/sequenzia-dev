@@ -1,13 +1,14 @@
 'use client';
 
 import { memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { FileCode } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   CodeBlock,
   CodeBlockCopyButton,
 } from '@/components/ai-elements/code-block';
+import { codeBlockEntrance } from '@/lib/motion';
 import type { CodeContentData } from '@/types';
 import type { BundledLanguage } from 'shiki';
 
@@ -50,8 +51,9 @@ export const CodeContent = memo(function CodeContent({
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial="hidden"
+      animate="visible"
+      variants={codeBlockEntrance}
       onClick={(e) => e.stopPropagation()}
       className="space-y-2"
     >

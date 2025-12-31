@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { motion } from 'motion/react';
 import type { UIMessage, ToolUIPart } from 'ai';
 import { CopyIcon, RefreshCcwIcon, CheckIcon } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -19,6 +20,12 @@ import {
 } from '@/components/ai-elements/tool';
 import { useChat } from './ChatProvider';
 import { ExpandableContent } from '@/components/expandable/ExpandableContent';
+import {
+  messageItemUser,
+  messageItemAssistant,
+  useAnimationConfig,
+  springs,
+} from '@/lib/motion';
 import type { ExpandableContent as ExpandableContentType } from '@/types';
 
 interface ChatMessageProps {
@@ -28,6 +35,7 @@ interface ChatMessageProps {
 export const ChatMessage = memo(function ChatMessage({ message }: ChatMessageProps) {
   const { regenerateLastMessage } = useChat();
   const [copied, setCopied] = useState(false);
+  const { shouldAnimate, hoverGesture, tapGesture } = useAnimationConfig();
 
   const handleCopy = useCallback(async () => {
     // Get text content from message parts
@@ -41,8 +49,17 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
     setTimeout(() => setCopied(false), 2000);
   }, [message.parts]);
 
+  // Choose animation variant based on role
+  const messageVariants =
+    message.role === 'user' ? messageItemUser : messageItemAssistant;
+
   return (
-    <Message from={message.role}>
+    <motion.div
+      initial={shouldAnimate ? 'hidden' : false}
+      animate={shouldAnimate ? 'visible' : false}
+      variants={messageVariants}
+    >
+      <Message from={message.role}>
       <MessageContent>
         {message.parts?.map((part, index) => {
           // Handle text parts
@@ -103,28 +120,41 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
         })}
       </MessageContent>
 
-      {/* Actions for assistant messages */}
+      {/* Actions for assistant messages with gesture feedback */}
       {message.role === 'assistant' && (
         <MessageActions>
-          <MessageAction
-            tooltip="Copy"
-            onClick={handleCopy}
+          <motion.div
+            whileHover={hoverGesture}
+            whileTap={tapGesture}
+            transition={springs.snappy}
           >
-            {copied ? (
-              <CheckIcon className="size-3.5" />
-            ) : (
-              <CopyIcon className="size-3.5" />
-            )}
-          </MessageAction>
-          <MessageAction
-            tooltip="Regenerate"
-            onClick={regenerateLastMessage}
+            <MessageAction
+              tooltip="Copy"
+              onClick={handleCopy}
+            >
+              {copied ? (
+                <CheckIcon className="size-3.5" />
+              ) : (
+                <CopyIcon className="size-3.5" />
+              )}
+            </MessageAction>
+          </motion.div>
+          <motion.div
+            whileHover={hoverGesture}
+            whileTap={tapGesture}
+            transition={springs.snappy}
           >
-            <RefreshCcwIcon className="size-3.5" />
-          </MessageAction>
+            <MessageAction
+              tooltip="Regenerate"
+              onClick={regenerateLastMessage}
+            >
+              <RefreshCcwIcon className="size-3.5" />
+            </MessageAction>
+          </motion.div>
         </MessageActions>
       )}
-    </Message>
+      </Message>
+    </motion.div>
   );
 });
 
