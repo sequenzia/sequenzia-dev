@@ -6,15 +6,16 @@
 
 ## 1. Executive Summary
 
-This specification defines an AI assistant application built on the Expanding Message Paradigm, a design philosophy that treats conversation and interactivity as a unified spectrum rather than separate concerns. The application combines traditional conversational AI capabilities with the ability to generate rich, interactive UI elements that expand and contract within the natural message flow.
+This specification defines an AI assistant application built on the Inline Content Paradigm, a design philosophy that treats conversation and interactivity as a unified experience. The application combines traditional conversational AI capabilities with the ability to generate rich, interactive UI elements that render inline within the natural message flow.
 
-The core innovation lies in how interactive content is presented: rather than relegating generated artifacts to separate panels or modal overlays, each AI response can expand in place to reveal forms, visualizations, code editors, and other interactive components. This preserves conversational context while accommodating sophisticated user interactions.
+The core innovation lies in how interactive content is presented: rather than relegating generated artifacts to separate panels or modal overlays, AI-generated forms, visualizations, code blocks, and cards render directly within assistant messages. This preserves conversational context while enabling sophisticated user interactions.
 
 | Attribute             | Value                               |
 | --------------------- | ----------------------------------- |
 | **Target Platform**   | Web (Desktop and Mobile Responsive) |
-| **Primary Framework** | Next.js with React                  |
-| **AI Integration**    | Vercel AI SDK v6.0 with AI Gateway  |
+| **Primary Framework** | Next.js 16 with React 19            |
+| **AI Integration**    | Vercel AI SDK v6 with AI Gateway    |
+| **UI Components**     | Vercel AI Elements + shadcn/ui      |
 | **Deployment**        | Vercel Platform                     |
 
 ---
@@ -27,17 +28,17 @@ Current AI chat interfaces create a fundamental disconnect between conversation 
 
 ### 2.2 Solution Overview
 
-The Expanding Message Paradigm eliminates this disconnect by treating every AI response as a potentially expandable container. A simple text reply remains compact and conversational. A generated form, chart, or interactive component expands in place, claiming the visual and interactive space it needs while remaining anchored to its conversational context.
+The Inline Content Paradigm eliminates this disconnect by treating every AI response as a container for both text and interactive elements. A simple text reply remains compact and conversational. Generated forms, charts, and interactive components render in place within the message, claiming the visual and interactive space they need while remaining anchored to their conversational context.
 
 ### 2.3 Design Principles
 
 1. **Contextual Continuity:** Interactive elements exist within the conversation timeline, preserving the when and why of their creation.
 
-2. **Progressive Disclosure:** Content reveals itself proportionally to user engagement, from collapsed previews to fully expanded interactions.
+2. **Immediate Interactivity:** Content blocks render fully interactive without requiring user action to expand or reveal them.
 
-3. **Graceful Transitions:** State changes between expansion levels feel organic and trackable, never jarring or disorienting.
+3. **Graceful Animations:** Message entrances and content appearances feel organic through spring-based animations.
 
-4. **Viewport Respect:** Scroll position and user focus are preserved intelligently as content expands and contracts.
+4. **Viewport Respect:** Scroll position automatically sticks to the bottom during streaming, with manual scroll override.
 
 ---
 
@@ -45,32 +46,36 @@ The Expanding Message Paradigm eliminates this disconnect by treating every AI r
 
 ### 3.1 Technology Stack
 
-| Layer          | Technology                     | Purpose                                        |
-| -------------- | ------------------------------ | ---------------------------------------------- |
-| Framework      | Next.js 14+                    | Full-stack React framework with App Router     |
-| UI Core        | React 18+                      | Component architecture and state management    |
-| Design System  | Vercel AI Elements + shadcn/ui | Pre-built AI chat components and UI primitives |
-| Styling        | Tailwind CSS                   | Utility-first styling with custom animations   |
-| State          | TanStack Query                 | Server state, caching, and synchronization     |
-| AI Integration | Vercel AI SDK v6.0             | Streaming, tool calls, and UI generation       |
-| AI Models      | Vercel AI Gateway              | Multi-provider model routing and fallbacks     |
-| Deployment     | Vercel                         | Edge functions, CDN, and serverless hosting    |
+| Layer            | Technology                     | Purpose                                           |
+| ---------------- | ------------------------------ | ------------------------------------------------- |
+| Framework        | Next.js 16.1                   | Full-stack React framework with App Router        |
+| UI Core          | React 19.2                     | Component architecture and state management       |
+| AI Components    | Vercel AI Elements             | Pre-built chat UI (Conversation, Message, etc.)   |
+| UI Primitives    | shadcn/ui (New York style)     | Accessible component primitives via Radix UI      |
+| Styling          | Tailwind CSS v4                | Utility-first styling with OKLch color system     |
+| Animation        | Framer Motion / Motion         | Spring-based animations and gesture feedback      |
+| Validation       | Zod v4                         | Schema validation for AI tool inputs              |
+| State            | React Context + AI SDK hooks   | Chat state via useChat, theme via ThemeProvider   |
+| Server Cache     | TanStack Query                 | Infrastructure for server state caching           |
+| AI Integration   | Vercel AI SDK v6               | Streaming, tool calls, and UI generation          |
+| AI Models        | Vercel AI Gateway              | Multi-provider model routing                      |
+| Deployment       | Vercel                         | Edge functions, CDN, and serverless hosting       |
 
 ### 3.2 High-Level Architecture
 
-The application follows a layered architecture that separates concerns while enabling tight integration between the AI backend and the expandable UI system.
+The application follows a layered architecture that separates concerns while enabling tight integration between the AI backend and the UI system.
 
 #### 3.2.1 Presentation Layer
 
-The presentation layer consists of React components organized around the expanding message paradigm. The primary components include a ChatContainer that manages the conversation viewport, MessageBubble components that handle expansion state and transitions, and specialized ContentBlock components for each type of interactive element the AI can generate.
+The presentation layer consists of React components built on Vercel AI Elements and shadcn/ui. The primary components include a ChatContainer that manages the conversation viewport with sticky scroll, ChatMessage components that render message parts (text, reasoning, tool outputs), and specialized ContentBlock components for each type of interactive element.
 
 #### 3.2.2 State Management Layer
 
-TanStack Query manages server state including conversation history, message streaming, and AI responses. Local UI state, particularly expansion states and animation coordination, is handled through React context providers and component-level state. This separation allows the expansion system to operate independently of network concerns while staying synchronized with the underlying data.
+The Vercel AI SDK's `useChat` hook manages chat state including messages, streaming status, and error handling. A ChatProvider context wraps this functionality, adding model selection and convenience methods. ThemeProvider manages theme state with localStorage persistence. TanStack Query is configured as infrastructure for future server state needs.
 
 #### 3.2.3 AI Integration Layer
 
-The Vercel AI SDK v6.0 provides the bridge between the frontend and AI models. This layer handles streaming responses, tool call orchestration, and the structured output parsing required to render generated UI components. The AI Gateway enables model routing, allowing different models to be used for different tasks or as fallbacks.
+The Vercel AI SDK v6 provides the bridge between the frontend and AI models. This layer handles streaming responses via Server-Sent Events, tool call orchestration through Zod-validated schemas, and the structured output parsing required to render generated UI components. The AI Gateway enables model routing across multiple providers.
 
 ---
 
@@ -78,47 +83,78 @@ The Vercel AI SDK v6.0 provides the bridge between the frontend and AI models. T
 
 ### 4.1 Conversational Interface
 
-The foundation of the application is a streaming chat interface that supports real-time AI responses. Users can send text messages, attach files, and receive responses that stream in token by token. The interface supports markdown rendering, code syntax highlighting, and inline media display.
+The foundation of the application is a streaming chat interface that supports real-time AI responses. Users can send text messages and receive responses that stream in token by token. The interface supports markdown rendering, code syntax highlighting via Shiki, and reasoning/thinking display.
 
-### 4.2 Message Expansion System
+### 4.2 Model Selection
 
-Every AI message exists within an expansion state machine that governs its visual presentation and interactive capabilities. The system defines four primary states that messages can occupy.
+Users can select from multiple AI models during conversation:
 
-#### 4.2.1 Collapsed State
+| Provider  | Models                                    |
+| --------- | ----------------------------------------- |
+| OpenAI    | GPT-5 Nano, GPT-5 Mini, GPT-4o Mini       |
+| Google    | Gemini 2.0 Flash                          |
+| DeepSeek  | DeepSeek V3.2                             |
 
-Messages appear as compact previews showing type indicators and brief descriptions. This state minimizes vertical space consumption while communicating what content is available. For a generated form, users might see a form icon, the form title, and a field count. For a chart, a small sparkline preview might be shown.
-
-#### 4.2.2 Partially Expanded State
-
-An intermediate state that shows enough content to be useful without dominating the viewport. Forms display their first few fields, charts render at constrained dimensions, and code blocks show initial lines with expansion affordances. This state enables quick interactions during conversation browsing.
-
-#### 4.2.3 Fully Expanded State
-
-Content claims whatever space it genuinely requires. All form fields are visible, charts render at comfortable dimensions with full interactivity, and code editors gain complete tooling. Even in this state, the message remains part of the chat flow rather than escaping into a modal.
-
-#### 4.2.4 Focused State
-
-For complex interactions, messages can enter a focused mode that visually deprioritizes surrounding content while keeping it accessible. This signals deep engagement without breaking conversational context. Scrolling continues to work, but the focused element receives enhanced visual prominence.
+Model selection persists in the ChatProvider context and is passed with each request. The model selector appears in the input composer, grouped by provider.
 
 ### 4.3 Interactive UI Generation
 
-The AI can generate several categories of interactive elements that render within the expanding message system.
+The AI can generate several categories of interactive elements that render inline within messages.
 
 #### 4.3.1 Forms and Inputs
 
-Dynamic forms with validation, conditional logic, and styled input components. Form submissions generate new messages in the conversation, maintaining cause-and-effect clarity. Supported input types include text fields, text areas, selects, checkboxes, radio groups, date pickers, sliders, and file uploads.
+Dynamic forms with field validation and styled input components. Form submissions generate new messages in the conversation, maintaining cause-and-effect clarity. Supported input types:
+
+- Text fields and text areas
+- Select dropdowns with options
+- Checkboxes and radio groups
+- Date pickers
+- Range sliders with live value display
+- Number and email inputs
+- File upload fields
+
+Forms display a success state with animated checkmark after submission.
 
 #### 4.3.2 Data Visualizations
 
-Charts and graphs rendered with interactive capabilities including tooltips, zoom, pan, and drill-down. Supported visualization types include line charts, bar charts, pie charts, scatter plots, area charts, and composite dashboards combining multiple visualization types.
+Charts rendered via Recharts with interactive tooltips. Supported visualization types:
 
-#### 4.3.3 Code Editors
+- Line charts
+- Bar charts
+- Pie charts
+- Area charts
 
-Syntax-highlighted code blocks that can expand into full editors with line numbers, language detection, copy functionality, and optional execution capabilities for supported languages. The editor supports themes, font size adjustment, and keyboard shortcuts.
+Charts render at fixed height (300px) with responsive width and theme-aware colors using CSS custom properties (`--chart-1` through `--chart-5`).
 
-#### 4.3.4 Rich Content
+#### 4.3.3 Code Blocks
 
-Expandable content cards for displaying structured information, image galleries, embedded media, and formatted documents. This category handles content that benefits from expandable presentation without requiring deep interactivity.
+Syntax-highlighted code blocks using Shiki with dual-theme support (light and dark HTML pre-rendered). Features include:
+
+- Language detection and badge display
+- Line numbers (optional)
+- Copy-to-clipboard functionality
+- Code statistics (line count, character count)
+
+#### 4.3.4 Rich Content Cards
+
+Content cards for displaying structured information with optional media. Features:
+
+- Title and description
+- Body content
+- Media support (image or video with aspect ratio)
+- Action buttons with variants (default, secondary, destructive, outline)
+
+Card actions trigger new messages in the conversation when clicked.
+
+### 4.4 Reasoning Display
+
+When AI models provide reasoning/thinking content, it renders in a collapsible Reasoning component:
+
+- Auto-opens when reasoning starts streaming
+- Shows "Thought for X seconds" duration
+- Auto-closes after streaming ends (configurable delay)
+- Shimmer animation while streaming
+- Markdown rendering via Streamdown
 
 ---
 
@@ -126,71 +162,90 @@ Expandable content cards for displaying structured information, image galleries,
 
 ### 5.1 Layout Structure
 
-The application uses a single-column centered layout for the chat interface, optimized for readability and focus. On larger screens, the chat column is constrained to a maximum width that ensures comfortable reading while leaving space for future sidebar features. On mobile devices, the interface spans the full viewport width.
+The application uses a single-column centered layout optimized for readability:
+
+- Maximum width of `3xl` (48rem) for chat content
+- Full-height flex layout with header, scrollable chat area, and fixed input
+- Responsive padding that adapts to viewport size
 
 ### 5.2 Message Components
 
 #### 5.2.1 User Messages
 
-User messages appear right-aligned with a distinct background color. They support text content, file attachments with previews, and inline code. User messages do not participate in the expansion system as they represent static input.
+User messages slide in from the right with a subtle animation. They display text content and support the AI SDK's UIMessage parts structure.
 
 #### 5.2.2 Assistant Messages
 
-Assistant messages appear left-aligned and are the primary participants in the expansion system. Each assistant message contains a header area with avatar and timestamp, a content area that grows and shrinks with expansion state, expansion controls that appear on hover or touch, and action buttons for copying, regenerating, or providing feedback.
+Assistant messages slide in from the left. Each assistant message can contain multiple parts:
 
-### 5.3 Expansion Controls
+- **Text parts:** Rendered via MessageResponse component
+- **Reasoning parts:** Collapsible thinking display
+- **Tool parts:** Either ContentBlock (for form/chart/code/card) or generic Tool component
 
-Expansion state transitions are triggered through multiple interaction patterns to accommodate different user preferences and contexts.
+Assistant messages include action buttons:
+- Copy text to clipboard (with success feedback)
+- Regenerate response
 
-- **Click/Tap:** The primary mechanism. Clicking a collapsed message expands it to the partially expanded state. Clicking again fully expands it. A third click collapses back to the initial state.
+### 5.3 Input Composer
 
-- **Expand/Collapse Button:** An explicit affordance for users who prefer direct controls over click-anywhere patterns.
+The input area includes:
 
-- **Keyboard Navigation:** Arrow keys navigate between messages, Enter toggles expansion state, and Escape collapses the currently focused message.
-
-- **Double-Tap (Mobile):** Quickly toggles between collapsed and fully expanded states for efficient mobile interaction.
+- Multi-line text input with auto-resize
+- Model selector dropdown (grouped by provider with logos)
+- Submit button with loading state
+- Keyboard hints (Enter to send, Shift+Enter for newline)
 
 ### 5.4 Animation Specifications
 
-Transitions between expansion states follow a choreographed animation system designed to feel organic and maintain user orientation.
+Animations use Framer Motion with spring-based physics for natural feel.
 
-#### 5.4.1 Timing
+#### 5.4.1 Spring Presets
 
-All expansion animations use a duration of 250ms with an ease-out timing function. This provides responsiveness while remaining smooth enough to track visually. Collapse animations use 200ms with ease-in, making the reduction feel slightly quicker and more decisive.
+| Preset   | Stiffness | Damping | Use Case                    |
+| -------- | --------- | ------- | --------------------------- |
+| Gentle   | 120       | 14      | Content appearance          |
+| Snappy   | 400       | 30      | UI feedback                 |
+| Bouncy   | 300       | 10      | Success/celebration states  |
 
-#### 5.4.2 Sequence
+#### 5.4.2 Message Animations
 
-When expanding, the container height animates first, followed by content opacity fading in with a 50ms delay. This creates a sense of the content being revealed rather than appearing. When collapsing, content fades out first, then the container shrinks, creating the impression of content being tucked away.
+- User messages: Slide from right (x: 12 → 0) with 200ms ease-out
+- Assistant messages: Slide from left (x: -12 → 0) with 200ms ease-out
+- Loading indicator: Fade in with upward movement (y: 8 → 0)
 
-#### 5.4.3 Interruption Handling
+#### 5.4.3 Content Block Animations
 
-If a user triggers a state change during an ongoing animation, the system smoothly reverses or redirects to the new target state rather than jumping or queuing. This is achieved through spring-based animations that can be interrupted and redirected mid-flight.
+- Forms: Staggered field entrance (80ms between fields)
+- Charts: Scale entrance (0.96 → 1) with gentle spring
+- Code blocks: Slide from left (x: -16 → 0) with snappy spring
+- Cards: Slide up (y: 12 → 0) with gentle spring
+
+#### 5.4.4 Gesture Feedback
+
+- Button hover: Scale to 1.02 (desktop only)
+- Button tap: Scale to 0.97 (0.95 on mobile)
+- Reduced motion: All animations respect `prefers-reduced-motion`
 
 ---
 
 ## 6. Scroll and Viewport Management
 
-### 6.1 Anchor-Based Scrolling
+### 6.1 Sticky Scroll Behavior
 
-When content expands, the viewport adjusts to keep relevant content stationary from the user's perspective. The system identifies an anchor point based on what the user was viewing or interacting with, then maintains that anchor's screen position as surrounding content shifts.
+The chat container uses `use-stick-to-bottom` library for automatic scroll management:
 
-### 6.2 Expansion Scenarios
+- Automatically scrolls to bottom when new content arrives
+- Detaches when user scrolls up manually
+- Scroll-to-bottom button appears when detached
+- Re-attaches when user scrolls near bottom
 
-#### 6.2.1 Expanding Above Viewport
+### 6.2 Loading State Management
 
-When a message above the current viewport expands, the scroll position adjusts to compensate, keeping the user's current view stable. The user should not perceive any content jump.
+The loading indicator ("Thinking...") appears:
+- During 'submitted' status (before first response chunk)
+- During early 'streaming' when assistant message has no visible content yet
 
-#### 6.2.2 Expanding Within Viewport
-
-When the expanding message is within the viewport, the system determines whether to anchor on the expanding message itself or on content below it, depending on where the user's focus appears to be based on recent interactions.
-
-#### 6.2.3 Expanding at Conversation End
-
-The most recent message receives special treatment. When it expands, the viewport scrolls to keep the bottom of the content visible, as users are typically most interested in newly generated content.
-
-### 6.3 Overflow Containment
-
-As an optional mode configurable in user settings, expanded content can be constrained to a maximum height. Beyond this height, the content becomes internally scrollable rather than pushing the conversation further. This trades elegance for predictability in conversations with many large interactive elements.
+Messages are filtered to hide empty assistant messages during initial streaming, preventing layout jumps.
 
 ---
 
@@ -198,73 +253,199 @@ As an optional mode configurable in user settings, expanded content can be const
 
 ### 7.1 Component Hierarchy
 
-The component structure reflects the expanding message paradigm, with clear separation between container logic and content rendering.
+| Component        | Responsibility                                                               |
+| ---------------- | ---------------------------------------------------------------------------- |
+| _ChatProvider_   | Context providing chat state, actions, model selection via useChat hook      |
+| _ChatContainer_  | Conversation wrapper with sticky scroll and message filtering                |
+| _ChatMessage_    | Individual message renderer handling parts routing and actions               |
+| _ContentBlock_   | Router component dispatching to type-specific renderers                      |
+| _FormContent_    | Form rendering with field types, validation, submission, success state       |
+| _ChartContent_   | Recharts wrapper with responsive container and theme colors                  |
+| _CodeContent_    | Shiki syntax highlighting with dual-theme support and copy button            |
+| _CardContent_    | Card display with media, actions, and click handling                         |
+| _InputComposer_  | Text input with model selector and keyboard handling                         |
+| _Reasoning_      | Collapsible reasoning/thinking display with streaming support                |
+| _Tool_           | Generic tool invocation display with status badges                           |
 
-| Component           | Responsibility                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------- |
-| _ChatProvider_      | Context provider managing conversation state, AI connection, and global expansion coordination |
-| _ChatContainer_     | Viewport management, scroll behavior, and message list rendering                               |
-| _MessageBubble_     | Individual message wrapper handling expansion state, animations, and content delegation        |
-| _ContentBlock_      | Abstract base for all content block types with shared transition logic                         |
-| _FormContent_       | Generated form rendering with validation, submission, and field management                     |
-| _ChartContent_      | Data visualization rendering with interactive capabilities                                     |
-| _CodeContent_       | Code display and editing with syntax highlighting and tooling                                  |
-| _InputComposer_     | Message input area with file attachment, voice input, and submission handling                  |
+### 7.2 AI Elements Components
 
-### 7.2 State Management Strategy
+Pre-built components from Vercel AI Elements registry:
 
-#### 7.2.1 Server State (TanStack Query)
+| Component              | Purpose                                    |
+| ---------------------- | ------------------------------------------ |
+| Conversation           | Container with StickToBottom scroll        |
+| ConversationContent    | Message list container                     |
+| ConversationEmptyState | Empty state with icon and description      |
+| ConversationScrollButton | Sticky scroll-to-bottom control          |
+| Message                | Role-aware message wrapper                 |
+| MessageContent         | Message body container                     |
+| MessageResponse        | Text content renderer                      |
+| MessageActions         | Action button container                    |
+| PromptInput            | Input composition wrapper                  |
+| PromptInputTextarea    | Auto-resizing text input                   |
+| ModelSelector          | Model selection dropdown                   |
+| CodeBlock              | Syntax highlighting with Shiki             |
+| Tool                   | Tool invocation display                    |
+| Loader                 | Spinning loading indicator                 |
 
-Conversation history, message content, and AI responses are managed through TanStack Query. This provides automatic caching, background refetching, optimistic updates for message sending, and efficient pagination for long conversations.
+### 7.3 State Management Strategy
 
-#### 7.2.2 UI State (React Context + Local State)
+#### 7.3.1 Chat State (AI SDK + Context)
 
-Expansion states, animation coordination, and focus management are handled through a combination of React context for global coordination and component-local state for individual message behavior. This separation ensures that expansion interactions remain responsive even during network operations.
+The ChatProvider wraps `useChat` from `@ai-sdk/react` with `DefaultChatTransport`:
 
-#### 7.2.3 Form State (Local to FormContent)
+```typescript
+interface ChatContextValue {
+  messages: UIMessage[];
+  status: ChatStatus;  // 'idle' | 'submitted' | 'streaming'
+  isLoading: boolean;
+  error: Error | null;
+  sendMessage: (content: string) => void;
+  regenerateLastMessage: () => void;
+  clearMessages: () => void;
+  stop: () => void;
+  modelId: string;
+  setModelId: (modelId: string) => void;
+}
+```
 
-Generated forms manage their own state locally, with submission triggering a mutation that creates a new message in the conversation. This isolation prevents form interactions from affecting the broader UI state.
+#### 7.3.2 Theme State (ThemeProvider)
+
+Custom ThemeProvider managing:
+- Theme preference: 'light' | 'dark' | 'system'
+- Resolved theme: 'light' | 'dark'
+- High contrast mode
+- localStorage persistence
+- System preference listener
+
+#### 7.3.3 Form State (Local to FormContent)
+
+Generated forms manage their own state locally via useState, with submission triggering `sendMessage` to create a new conversation message.
 
 ---
 
 ## 8. Data Models
 
-### 8.1 Message Structure
+### 8.1 Message Structure (UIMessage from AI SDK)
 
-Messages are the fundamental data unit, representing both user input and AI responses. The structure accommodates plain text, rich content, and generated interactive elements.
+Messages use the Vercel AI SDK's UIMessage format:
 
-#### 8.1.1 Core Message Fields
+```typescript
+interface UIMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  parts?: Array<
+    | { type: 'text'; text: string }
+    | { type: 'reasoning'; text: string }
+    | { type: `tool-${string}`; state: ToolState; output?: unknown; errorText?: string }
+  >;
+}
 
-- **id:** Unique identifier for the message
-- **role:** Either 'user' or 'assistant'
-- **content:** Text content of the message
-- **timestamp:** ISO 8601 creation timestamp
-- **attachments:** Array of file references for user uploads
-- **contentBlock:** Optional structured content for interactive elements
+type ToolState =
+  | 'input-streaming'
+  | 'input-available'
+  | 'approval-requested'
+  | 'approval-responded'
+  | 'output-available'
+  | 'output-error'
+  | 'output-denied';
+```
 
-#### 8.1.2 Content Block Types
+### 8.2 Content Block Types
 
-The contentBlock field contains a discriminated union based on the type field, with each type having its own schema for the associated data.
+The contentBlock output from tools contains a discriminated union based on the type field:
 
-- **form:** Schema defining fields, validation rules, and submission behavior
-- **chart:** Visualization specification with data, chart type, and configuration
-- **code:** Code content with language, filename, and execution options
-- **card:** Structured content card with title, body, and optional media
+```typescript
+type ContentBlock =
+  | FormContentData
+  | ChartContentData
+  | CodeContentData
+  | CardContentData;
+```
 
-### 8.2 Conversation Structure
+#### 8.2.1 Form Content
 
-- **id:** Unique conversation identifier
-- **title:** Display title, often derived from first user message
-- **messages:** Ordered array of Message objects
-- **createdAt:** Conversation creation timestamp
-- **updatedAt:** Last activity timestamp
+```typescript
+interface FormContentData {
+  type: 'form';
+  title: string;
+  description?: string;
+  fields: FormField[];
+  submitLabel?: string;
+}
 
-### 8.3 Expansion State
+interface FormField {
+  id: string;
+  type: 'text' | 'textarea' | 'select' | 'checkbox' | 'radio' |
+        'date' | 'slider' | 'file' | 'number' | 'email';
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+  defaultValue?: string | number | boolean;
+  options?: { label: string; value: string }[];
+  min?: number;
+  max?: number;
+  step?: number;
+}
+```
 
-- **messageId:** Reference to the associated message
-- **state:** One of 'collapsed', 'partial', 'expanded', or 'focused'
-- **pinned:** Boolean indicating whether auto-collapse should be prevented
-- **interactionDepth:** Tracks user engagement level for smart restoration
+#### 8.2.2 Chart Content
+
+```typescript
+interface ChartContentData {
+  type: 'chart';
+  chartType: 'line' | 'bar' | 'pie' | 'area';
+  title: string;
+  description?: string;
+  data: { label: string; value: number }[];
+}
+```
+
+#### 8.2.3 Code Content
+
+```typescript
+interface CodeContentData {
+  type: 'code';
+  language: string;
+  filename?: string;
+  code: string;
+  editable?: boolean;
+  showLineNumbers?: boolean;
+}
+```
+
+#### 8.2.4 Card Content
+
+```typescript
+interface CardContentData {
+  type: 'card';
+  title: string;
+  description?: string;
+  content?: string;
+  media?: {
+    type: 'image' | 'video';
+    url: string;
+    alt?: string;
+  };
+  actions?: {
+    label: string;
+    action: string;
+    variant?: 'default' | 'secondary' | 'destructive' | 'outline';
+  }[];
+}
+```
+
+### 8.3 Model Definition
+
+```typescript
+interface Model {
+  id: string;           // e.g., "openai/gpt-5-nano"
+  name: string;         // e.g., "GPT-5 Nano"
+  provider: string;     // e.g., "OpenAI"
+  providerSlug: string; // e.g., "openai"
+  description?: string;
+}
+```
 
 ---
 
@@ -272,31 +453,103 @@ The contentBlock field contains a discriminated union based on the type field, w
 
 ### 9.1 Vercel AI SDK Integration
 
-The Vercel AI SDK v6.0 provides the core AI communication layer. The application uses the useChat hook for basic streaming and extends it with custom handlers for tool calls and UI generation.
+The Vercel AI SDK v6 provides the core AI communication layer.
 
-#### 9.1.1 Streaming Configuration
+#### 9.1.1 Client-Side Hook
 
-All AI responses stream to provide immediate feedback. The streaming configuration includes token-level updates for text content, structured data events for tool call progress, and completion callbacks for triggering post-response behaviors like auto-expansion.
+```typescript
+const { messages, status, error, sendMessage, stop, setMessages } = useChat({
+  transport: new DefaultChatTransport({
+    api: '/api/chat',
+  }),
+});
+```
 
-#### 9.1.2 Tool Call Handling
+#### 9.1.2 Server-Side Streaming
 
-The AI can invoke tools to gather information or perform actions. Tool calls are rendered as expandable content showing the tool name, input parameters, and results. Users can expand tool call messages to inspect the AI's reasoning process.
+```typescript
+// app/api/chat/route.ts
+export async function POST(req: Request) {
+  const { messages: uiMessages, modelId } = await req.json();
 
-### 9.2 UI Generation Protocol
+  const model = createModel(modelId);
+  const messages = await convertToModelMessages(uiMessages);
 
-When the AI generates interactive UI elements, it returns structured data conforming to the contentBlock schemas. This data is parsed and validated on the client before being passed to the appropriate content renderer.
+  const result = streamText({
+    model,
+    system: getSystemPrompt(),
+    messages,
+    tools: chatTools,
+  });
 
-#### 9.2.1 Form Generation
+  return result.toUIMessageStreamResponse({
+    sendReasoning: true,
+  });
+}
+```
 
-The AI can generate forms by specifying field definitions, validation rules, and submission handlers. The FormContent component interprets this schema and renders appropriate input components from the shadcn/ui library.
+### 9.2 Tool Definitions
 
-#### 9.2.2 Visualization Generation
+Four tools are defined using Zod schemas with `strict: true`:
 
-Charts are specified using a declarative format that maps to the charting library's configuration options. The AI provides data, chart type, and styling preferences, which the ChartContent component renders.
+```typescript
+export const chatTools = {
+  generateForm: tool({
+    description: 'Generate an interactive form...',
+    inputSchema: z.object({
+      type: z.literal('form'),
+      title: z.string(),
+      fields: z.array(FormFieldSchema),
+      // ...
+    }),
+    strict: true,
+    execute: async (params) => params,
+  }),
+  generateChart: tool({ /* ... */ }),
+  generateCode: tool({ /* ... */ }),
+  generateCard: tool({ /* ... */ }),
+};
+```
 
-### 9.3 AI Gateway Configuration
+Tools execute by returning their input parameters directly, which become the tool output rendered by ContentBlock.
 
-The Vercel AI Gateway enables model routing and fallback strategies. The application configures primary and fallback models, with routing rules based on task type, latency requirements, and cost optimization.
+### 9.3 Model Creation
+
+Server-side model factory using AI Gateway:
+
+```typescript
+// lib/ai/models.server.ts
+import "server-only";
+import { gateway, wrapLanguageModel } from "ai";
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+
+export function createModel(modelId?: string): LanguageModel {
+  const selectedModelId = isValidModelId(modelId) ? modelId : DEFAULT_MODEL_ID;
+  const baseModel = gateway(selectedModelId);
+
+  return process.env.AI_DEBUG === "true"
+    ? wrapLanguageModel({ model: baseModel, middleware: devToolsMiddleware() })
+    : baseModel;
+}
+```
+
+### 9.4 System Prompt
+
+```typescript
+export function getSystemPrompt(): string {
+  return `You are Sequenzia, a helpful AI assistant with the ability to create interactive content.
+
+When appropriate, you can generate:
+- **Forms**: For collecting user input (surveys, registrations, feedback)
+- **Charts**: For visualizing data (line, bar, pie, area charts)
+- **Code**: For displaying code snippets with syntax highlighting
+- **Cards**: For presenting structured information with optional media
+
+Use these tools when they would enhance the conversation. For simple text responses, just reply normally.
+
+Be helpful, concise, and friendly. When generating interactive content, make it practical and useful.`;
+}
+```
 
 ---
 
@@ -304,28 +557,27 @@ The Vercel AI Gateway enables model routing and fallback strategies. The applica
 
 ### 10.1 Performance
 
-1. **Initial Load:** Time to interactive under 2 seconds on 4G connections
-2. **Expansion Animations:** Consistent 60fps during state transitions
-3. **Message Rendering:** Support conversations with 1000+ messages without degradation
-4. **Streaming Latency:** First token visible within 500ms of request
+1. **Initial Load:** Fast time to interactive via Next.js App Router
+2. **Animations:** Consistent 60fps during spring-based transitions
+3. **Streaming Latency:** First token visible promptly via SSE streaming
+4. **Max Duration:** API route configured for 60 second timeout
 
 ### 10.2 Accessibility
 
-- Full keyboard navigation support for all expansion states and interactive elements
-- ARIA live regions announcing expansion state changes and new message arrivals
-- Screen reader compatible generated forms with proper labeling
-- Reduced motion mode respecting prefers-reduced-motion media query
-- WCAG 2.1 AA compliance for color contrast and interactive targets
+- Reduced motion mode respecting `prefers-reduced-motion` media query
+- Screen reader compatible via AI Elements ARIA attributes
+- Keyboard navigation for input and model selection
+- Form labels with required field indicators
 
 ### 10.3 Responsive Design
 
-- **Desktop (1024px+):** Full expansion capabilities with side-by-side content possible
-- **Tablet (768px-1023px):** Adapted layouts with touch-optimized expansion controls
-- **Mobile (<768px):** Full-width messages, simplified expansion, double-tap shortcuts
+- Single-column layout with max-width constraint
+- Mobile-optimized gesture feedback (larger tap targets)
+- Responsive padding and spacing
 
 ### 10.4 Browser Support
 
-The application targets modern evergreen browsers: Chrome, Firefox, Safari, and Edge in their current and previous major versions. Progressive enhancement ensures basic functionality on older browsers while reserving advanced animation features for capable environments.
+The application targets modern evergreen browsers with ES2017+ support.
 
 ---
 
@@ -333,87 +585,41 @@ The application targets modern evergreen browsers: Chrome, Firefox, Safari, and 
 
 ### 11.1 Overview
 
-The application implements a comprehensive theming system built on Tailwind CSS and CSS custom properties. This architecture enables runtime theme switching, user-customizable color schemes, and consistent styling across all components including dynamically generated UI elements.
+The application implements a theming system built on Tailwind CSS v4 and CSS custom properties using the OKLch color space for perceptually uniform colors.
 
 ### 11.2 Theme Architecture
 
-#### 11.2.1 CSS Custom Properties Foundation
+#### 11.2.1 OKLch Color System
 
-Themes are defined as collections of CSS custom properties (CSS variables) scoped to the document root or theme-specific selectors. This approach enables runtime theme switching without requiring stylesheet regeneration or page reloads.
+Colors are defined using OKLch (Lightness, Chroma, Hue) for better perceptual uniformity:
 
 ```css
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --border: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
+@theme inline {
+  --color-background: oklch(100% 0 0);
+  --color-foreground: oklch(9.6% 0.005 286.07);
+  --color-primary: oklch(20.5% 0 0);
+  --color-primary-foreground: oklch(98.5% 0 0);
+  --color-muted: oklch(96.5% 0.001 286.07);
+  --color-muted-foreground: oklch(45.2% 0.012 256.07);
+  --color-destructive: oklch(57.7% 0.245 27.33);
+  --color-border: oklch(91.4% 0.004 286.07);
+  --color-ring: oklch(70.5% 0.015 286.07);
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
+  --color-background: oklch(14.5% 0.005 286.07);
+  --color-foreground: oklch(98.5% 0 0);
   /* ... dark mode overrides */
 }
 ```
 
-#### 11.2.2 Tailwind Integration
+#### 11.2.2 Tailwind v4 Integration
 
-The Tailwind configuration extends the default theme to reference CSS custom properties, allowing theme-aware utility classes throughout the application.
+Tailwind CSS v4 uses the `@theme` directive for configuration, automatically generating utility classes from CSS custom properties.
 
-```javascript
-// tailwind.config.js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        border: "hsl(var(--border))",
-        ring: "hsl(var(--ring))",
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
-    },
-  },
-};
-```
+### 11.3 Theme Tokens
 
-#### 11.2.3 shadcn/ui Alignment
-
-The theming system aligns with shadcn/ui's design token conventions, ensuring that all shadcn/ui components automatically respect the active theme. Custom components follow the same token naming patterns for consistency.
-
-### 11.3 Theme Structure
-
-Each theme defines values across several categories that collectively control the application's visual presentation.
-
-#### 11.3.1 Color Tokens
+#### 11.3.1 Core Color Tokens
 
 | Token                | Purpose                                      |
 | -------------------- | -------------------------------------------- |
@@ -429,35 +635,19 @@ Each theme defines values across several categories that collectively control th
 | `border`             | Dividers, input borders                      |
 | `ring`               | Focus indicators                             |
 
-#### 11.3.2 Message-Specific Tokens
+#### 11.3.2 Chart Color Tokens
 
-The expanding message system requires additional tokens to style the various message states and content types.
+Five chart colors for data visualization:
 
-| Token                 | Purpose                              |
-| --------------------- | ------------------------------------ |
-| `message-user`        | User message bubble background       |
-| `message-assistant`   | Assistant message bubble background  |
-| `message-collapsed`   | Collapsed preview background tint    |
-| `message-expanded`    | Expanded content area background     |
-| `message-focused`     | Focused state overlay color          |
-| `expansion-indicator` | Color for expansion affordance icons |
+| Token      | Purpose               |
+| ---------- | --------------------- |
+| `chart-1`  | Primary data series   |
+| `chart-2`  | Secondary data series |
+| `chart-3`  | Tertiary data series  |
+| `chart-4`  | Quaternary series     |
+| `chart-5`  | Quinary series        |
 
-#### 11.3.3 Interactive Content Tokens
-
-Generated UI elements use dedicated tokens to maintain visual consistency while allowing theme-specific customization.
-
-| Token              | Purpose                      |
-| ------------------ | ---------------------------- |
-| `form-field`       | Input field backgrounds      |
-| `form-border`      | Input borders and separators |
-| `chart-grid`       | Visualization grid lines     |
-| `chart-axis`       | Axis labels and lines        |
-| `code-background`  | Code block backgrounds       |
-| `code-line-number` | Line number gutter color     |
-
-#### 11.3.4 Semantic Tokens
-
-Status and feedback colors that convey meaning regardless of the active theme.
+#### 11.3.3 Semantic Tokens
 
 | Token     | Purpose                              |
 | --------- | ------------------------------------ |
@@ -468,132 +658,170 @@ Status and feedback colors that convey meaning regardless of the active theme.
 
 ### 11.4 Built-in Themes
 
-The application ships with several pre-configured themes covering common preferences.
+#### 11.4.1 Light Theme
 
-#### 11.4.1 Light Theme (Default)
-
-A clean, high-contrast theme optimized for daytime use and well-lit environments. Uses a white background with dark text and blue primary accents.
+Clean, high-contrast theme optimized for daytime use. White background with dark text.
 
 #### 11.4.2 Dark Theme
 
-A low-light theme with a dark gray background and light text. Reduces eye strain in dim environments and conserves battery on OLED displays. Primary accents shift to lighter blue tones for adequate contrast.
+Low-light theme with dark gray background. Reduces eye strain in dim environments.
 
-#### 11.4.3 System Theme
+#### 11.4.3 System Theme (Default)
 
-Automatically switches between light and dark themes based on the user's operating system preference, detected via the `prefers-color-scheme` media query.
+Automatically switches between light and dark based on OS preference via `prefers-color-scheme` media query.
 
-#### 11.4.4 High Contrast Theme
+#### 11.4.4 High Contrast Mode
 
-An accessibility-focused theme with maximum contrast ratios, thicker borders, and enhanced focus indicators. Exceeds WCAG AAA contrast requirements.
-
-#### 11.4.5 Additional Themes
-
-The architecture supports additional themed variants such as sepia-toned reading modes, brand-specific color schemes, and seasonal or promotional themes.
+Optional accessibility mode with enhanced contrast ratios, applied via additional CSS class.
 
 ### 11.5 Theme Switching
 
-#### 11.5.1 User Controls
-
-Theme selection is available through a theme picker in the application settings. The picker displays live previews of each theme applied to sample UI elements. The selected theme persists in local storage and applies immediately without page reload.
-
-#### 11.5.2 Implementation
-
-Theme switching is handled by a ThemeProvider component that manages the current theme state and applies the appropriate class or data attribute to the document root.
+#### 11.5.1 ThemeProvider Implementation
 
 ```typescript
-interface ThemeProviderProps {
-  children: React.ReactNode;
-  defaultTheme?: string;
-  storageKey?: string;
-}
-
-// Theme application via class or data attribute
-document.documentElement.classList.remove("light", "dark", ...otherThemes);
-document.documentElement.classList.add(theme);
-```
-
-#### 11.5.3 Transition Effects
-
-Theme changes include a brief crossfade transition (150ms) to prevent jarring visual shifts. The transition applies to background and color properties while avoiding transitions on borders and shadows that could cause visual artifacts.
-
-### 11.6 Custom Themes
-
-#### 11.6.1 User-Created Themes
-
-Advanced users can create custom themes by defining values for the CSS custom properties. The settings interface provides a theme editor with color pickers for each token category and live preview of changes.
-
-#### 11.6.2 Theme Schema
-
-Custom themes are stored as JSON objects conforming to a defined schema.
-
-```typescript
-interface CustomTheme {
-  name: string;
-  description?: string;
-  baseTheme: "light" | "dark";
-  tokens: {
-    background: string;
-    foreground: string;
-    primary: string;
-    // ... additional tokens
-  };
+interface ThemeContextValue {
+  theme: 'light' | 'dark' | 'system';
+  resolvedTheme: 'light' | 'dark';
+  setTheme: (theme: Theme) => void;
+  highContrast: boolean;
+  setHighContrast: (enabled: boolean) => void;
 }
 ```
 
-#### 11.6.3 Theme Import/Export
+Features:
+- localStorage persistence (`sequenzia-theme`, `sequenzia-high-contrast`)
+- System preference listener via `matchMedia`
+- Applies CSS classes to `<html>` element
+- Returns null until mounted to prevent hydration mismatch
 
-Users can export custom themes as JSON files for backup or sharing. Imported themes are validated against the schema before being added to the available theme list.
+#### 11.5.2 User Controls
 
-### 11.7 Theming Generated Content
+Theme selection available in the header via dropdown menu with light/dark/system options.
 
-#### 11.7.1 Dynamic UI Integration
+### 11.6 Code Syntax Theming
 
-AI-generated UI elements inherit theme tokens automatically through Tailwind utility classes. The AI does not need to specify colors directly; instead, it references semantic token names that resolve to theme-appropriate values.
+Code blocks use Shiki with dual-theme rendering:
+- Light HTML rendered in light mode
+- Dark HTML rendered in dark mode
+- Theme switching handled via CSS `hidden`/`dark:block` classes
 
-#### 11.7.2 Chart Theming
+---
 
-Data visualizations receive theme values through a chart theme configuration object derived from CSS custom properties. This ensures charts match the application theme without requiring the AI to specify colors in chart definitions.
+## 12. Animation System
 
-#### 11.7.3 Code Syntax Themes
+### 12.1 Motion Library
 
-Code blocks use syntax highlighting themes that complement the active application theme. Light application themes pair with light syntax themes (e.g., GitHub Light), while dark application themes pair with dark syntax themes (e.g., One Dark).
+Animations use Framer Motion (imported as `motion/react`) for spring-based physics.
 
-### 11.8 Animation Theming
+### 12.2 Animation Variants
 
-#### 11.8.1 Motion Tokens
+#### 12.2.1 Entrance Variants
 
-Themes can define motion preferences that affect animation durations and easing functions across the application.
+```typescript
+export const fadeIn: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
 
-| Token               | Purpose                  | Default                           |
-| ------------------- | ------------------------ | --------------------------------- |
-| `transition-fast`   | Quick micro-interactions | 150ms                             |
-| `transition-normal` | Standard transitions     | 250ms                             |
-| `transition-slow`   | Emphasis animations      | 400ms                             |
-| `ease-default`      | Standard easing          | ease-out                          |
-| `ease-bounce`       | Playful interactions     | cubic-bezier(0.34, 1.56, 0.64, 1) |
+export const fadeInUp: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.15, ease: 'easeOut' } },
+};
 
-#### 11.8.2 Reduced Motion Support
+export const fadeInScale: Variants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: springs.gentle },
+};
+```
 
-When the user has `prefers-reduced-motion: reduce` enabled, animation durations collapse to near-instant values (10ms) and spring animations convert to simple opacity fades, regardless of theme settings.
+#### 12.2.2 Message Variants
+
+```typescript
+export const messageItemUser: Variants = {
+  hidden: { opacity: 0, x: 12 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+};
+
+export const messageItemAssistant: Variants = {
+  hidden: { opacity: 0, x: -12 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+};
+```
+
+#### 12.2.3 Form Variants
+
+```typescript
+export const formFieldContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+};
+
+export const formField: Variants = {
+  hidden: { opacity: 0, x: -12 },
+  visible: { opacity: 1, x: 0, transition: springs.snappy },
+};
+
+export const successBounce: Variants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { opacity: 1, scale: 1, transition: springs.bouncy },
+};
+```
+
+### 12.3 Motion Hooks
+
+```typescript
+// Detect reduced motion preference
+export function useReducedMotion(): boolean;
+
+// Detect mobile viewport
+export function useIsMobile(): boolean;
+
+// Combined animation configuration
+export function useAnimationConfig(): {
+  shouldAnimate: boolean;
+  isMobile: boolean;
+  tapGesture: { scale: number };
+  hoverGesture: { scale: number } | {};
+};
+```
+
+### 12.4 Reduced Motion Support
+
+When `prefers-reduced-motion: reduce` is enabled:
+- `shouldAnimate` returns false
+- Components skip entrance animations
+- Gesture feedback remains for accessibility
 
 ---
 
 ## Appendix A: Glossary
 
-**Expansion State:** The current visual mode of a message: collapsed, partial, expanded, or focused.
+**Content Block:** Structured data representing interactive elements the AI can generate within messages (form, chart, code, card).
 
-**Anchor-Based Scrolling:** Viewport management technique that maintains a reference point's screen position during content changes.
+**Tool Call:** An AI-initiated function invocation that generates structured output rendered as a ContentBlock.
 
-**Content Block:** Structured data representing interactive elements the AI can generate within messages.
+**AI Gateway:** Vercel's service for routing AI requests across multiple model providers with a unified API.
 
-**Tool Call:** An AI-initiated function invocation to gather information or perform actions.
+**Streaming Response:** AI output delivered incrementally via Server-Sent Events as tokens are generated.
 
-**AI Gateway:** Vercel's service for routing AI requests across multiple model providers.
+**UIMessage:** The message format used by Vercel AI SDK v6, containing parts array with typed content.
 
-**Streaming Response:** AI output delivered incrementally as tokens are generated rather than waiting for completion.
+**OKLch:** A perceptually uniform color space using Lightness, Chroma, and Hue for more consistent color manipulation.
 
-**CSS Custom Properties:** CSS variables that enable runtime theming by defining values that can be changed dynamically without stylesheet regeneration.
+**Spring Animation:** Physics-based animation using stiffness and damping parameters for natural motion.
 
-**Design Token:** A named value representing a visual design decision (color, spacing, typography) that can be referenced throughout the application for consistency.
+**AI Elements:** Vercel's component library for building AI chat interfaces, distributed via shadcn registry.
 
-**Semantic Token:** A design token named for its purpose rather than its value (e.g., "destructive" rather than "red"), enabling theme-appropriate styling across different color schemes.
+---
+
+## Appendix B: Future Considerations
+
+The following features from the original spec vision are not yet implemented but could be added:
+
+1. **Expansion States:** Multi-level content expansion (collapsed, partial, expanded, focused)
+2. **Anchor-Based Scrolling:** Viewport management during content expansion
+3. **Custom Theme Editor:** User-created themes with color pickers
+4. **Theme Import/Export:** JSON-based theme sharing
+5. **File Attachments:** User file upload support in messages
+6. **Conversation Persistence:** Server-side conversation storage
+7. **Voice Input:** Speech-to-text message input
