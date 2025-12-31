@@ -55,7 +55,8 @@ export const FormContentDataSchema = z.object({
 });
 
 export interface ChartDataPoint {
-  [key: string]: string | number;
+  label: string;
+  value: number;
 }
 
 export interface ChartContentData {
@@ -64,10 +65,12 @@ export interface ChartContentData {
   title: string;
   description?: string;
   data: ChartDataPoint[];
-  xKey: string;
-  yKey: string;
-  config?: Record<string, { label: string; color?: string }>;
 }
+
+const ChartDataPointSchema = z.object({
+  label: z.string().describe('The label for this data point (x-axis value)'),
+  value: z.number().describe('The numeric value for this data point (y-axis value)'),
+});
 
 export const ChartContentDataSchema = z.object({
   type: z.literal('chart').describe('Must be "chart"'),
@@ -75,16 +78,10 @@ export const ChartContentDataSchema = z.object({
   title: z.string().describe('The chart title'),
   description: z.string().optional().describe('Optional description of what the chart shows'),
   data: z
-    .array(z.record(z.string(), z.union([z.string(), z.number()])))
+    .array(ChartDataPointSchema)
     .describe(
-      'Array of data points. Each object must have keys matching xKey and yKey. Example: [{ "year": 2020, "value": 100 }, { "year": 2021, "value": 150 }]'
+      'Array of data points with label and value. Example: [{ "label": "2020", "value": 100 }, { "label": "2021", "value": 150 }]'
     ),
-  xKey: z.string().describe('The key in data objects to use for the x-axis (e.g., "year")'),
-  yKey: z.string().describe('The key in data objects to use for the y-axis (e.g., "value")'),
-  config: z
-    .record(z.string(), z.object({ label: z.string(), color: z.string().optional() }))
-    .optional()
-    .describe('Optional configuration for data series labels and colors'),
 });
 
 export interface CodeContentData {

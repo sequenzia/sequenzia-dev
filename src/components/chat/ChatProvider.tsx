@@ -327,10 +327,15 @@ export function ChatProvider({ children }: ChatProviderProps) {
       lastMessage.expandableContent &&
       !expansionStates.has(lastMessage.id)
     ) {
+      // Forms should auto-expand to 'expanded' so users can interact immediately
+      // Other content types start at 'partial' for a preview
+      const initialState =
+        lastMessage.expandableContent.type === 'form' ? 'expanded' : 'partial';
+
       dispatchExpansion({
         type: 'SET_STATE',
         messageId: lastMessage.id,
-        state: 'partial',
+        state: initialState,
       });
     }
   }, [messages, expansionStates]);

@@ -48,26 +48,15 @@ export const ChartContent = memo(function ChartContent({
   displayMode,
   messageId,
 }: ChartContentProps) {
-  // Generate chart config from content
+  // Generate chart config
   const chartConfig = useMemo<ChartConfig>(() => {
-    if (content.config) {
-      return Object.entries(content.config).reduce((acc, [key, value], index) => {
-        acc[key] = {
-          label: value.label,
-          color: value.color || CHART_COLORS[index % CHART_COLORS.length],
-        };
-        return acc;
-      }, {} as ChartConfig);
-    }
-
-    // Default config based on yKey
     return {
-      [content.yKey]: {
-        label: content.yKey,
+      value: {
+        label: 'Value',
         color: CHART_COLORS[0],
       },
     };
-  }, [content.config, content.yKey]);
+  }, []);
 
   // Preview mode - just show icon and title
   if (displayMode === 'preview') {
@@ -112,7 +101,7 @@ export const ChartContent = memo(function ChartContent({
               <LineChart data={content.data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--chart-grid)]" />
                 <XAxis
-                  dataKey={content.xKey}
+                  dataKey="label"
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
@@ -127,10 +116,10 @@ export const ChartContent = memo(function ChartContent({
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Line
                   type="monotone"
-                  dataKey={content.yKey}
-                  stroke={chartConfig[content.yKey]?.color || CHART_COLORS[0]}
+                  dataKey="value"
+                  stroke={CHART_COLORS[0]}
                   strokeWidth={2}
-                  dot={{ fill: chartConfig[content.yKey]?.color || CHART_COLORS[0] }}
+                  dot={{ fill: CHART_COLORS[0] }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -141,7 +130,7 @@ export const ChartContent = memo(function ChartContent({
               <BarChart data={content.data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--chart-grid)]" />
                 <XAxis
-                  dataKey={content.xKey}
+                  dataKey="label"
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
@@ -149,8 +138,8 @@ export const ChartContent = memo(function ChartContent({
                 <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar
-                  dataKey={content.yKey}
-                  fill={chartConfig[content.yKey]?.color || CHART_COLORS[0]}
+                  dataKey="value"
+                  fill={CHART_COLORS[0]}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -162,7 +151,7 @@ export const ChartContent = memo(function ChartContent({
               <AreaChart data={content.data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--chart-grid)]" />
                 <XAxis
-                  dataKey={content.xKey}
+                  dataKey="label"
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
@@ -171,9 +160,9 @@ export const ChartContent = memo(function ChartContent({
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Area
                   type="monotone"
-                  dataKey={content.yKey}
-                  stroke={chartConfig[content.yKey]?.color || CHART_COLORS[0]}
-                  fill={chartConfig[content.yKey]?.color || CHART_COLORS[0]}
+                  dataKey="value"
+                  stroke={CHART_COLORS[0]}
+                  fill={CHART_COLORS[0]}
                   fillOpacity={0.3}
                 />
               </AreaChart>
@@ -186,8 +175,8 @@ export const ChartContent = memo(function ChartContent({
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Pie
                   data={content.data}
-                  dataKey={content.yKey}
-                  nameKey={content.xKey}
+                  dataKey="value"
+                  nameKey="label"
                   cx="50%"
                   cy="50%"
                   outerRadius={height / 3}
@@ -215,7 +204,7 @@ export const ChartContent = memo(function ChartContent({
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
               />
-              <span>{String(item[content.xKey])}</span>
+              <span>{item.label}</span>
             </div>
           ))}
         </div>
