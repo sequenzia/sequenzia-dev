@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ModelPicker } from '@/components/ModelPicker';
 
 export function Header() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -25,6 +26,9 @@ export function Header() {
 
       {/* Actions */}
       <div className="flex items-center gap-2">
+        {/* Model picker */}
+        <ModelPicker />
+
         {/* Theme toggle */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

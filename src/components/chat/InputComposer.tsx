@@ -53,8 +53,9 @@ export const InputComposer = memo(function InputComposer({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Submit on Cmd/Ctrl + Enter
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      // Submit on Enter (without Shift)
+      // Shift+Enter allows multi-line input
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSubmit();
       }
@@ -136,15 +137,18 @@ export const InputComposer = memo(function InputComposer({
 
         {/* Hint text */}
         <p className="text-xs text-muted-foreground mt-2 text-center">
-          Press{' '}
           <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">
-            ⌘
+            Enter
+          </kbd>{' '}
+          to send,{' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">
+            Shift
           </kbd>{' '}
           +{' '}
           <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono text-xs">
             Enter
           </kbd>{' '}
-          to send
+          for new line
         </p>
       </form>
     </div>

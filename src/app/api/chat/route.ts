@@ -1,5 +1,4 @@
-import { openai } from '@ai-sdk/openai';
-import { streamText, tool, type UIMessage, type ModelMessage } from 'ai';
+import { streamText, gateway, tool, type UIMessage, type ModelMessage } from 'ai';
 import { z } from 'zod';
 import {
   FormFieldSchema,
@@ -7,8 +6,9 @@ import {
   CodeContentDataSchema,
   CardContentDataSchema,
 } from '@/types/message';
+import { DEFAULT_MODEL_ID, isValidModelId } from '@/lib/models';
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 // Convert UI messages (from DefaultChatTransport) to model messages (for streamText)
 function convertToModelMessages(uiMessages: UIMessage[]): ModelMessage[] {
@@ -100,13 +100,16 @@ function convertToModelMessages(uiMessages: UIMessage[]): ModelMessage[] {
 }
 
 export async function POST(req: Request) {
-  const { messages: uiMessages } = await req.json();
+  const { messages: uiMessages, modelId } = await req.json();
+
+  // Validate and use the provided model or fall back to default
+  const selectedModelId = isValidModelId(modelId) ? modelId : DEFAULT_MODEL_ID;
 
   // Convert UI messages to model messages
   const messages = convertToModelMessages(uiMessages);
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: gateway(selectedModelId),
     system: `You are Sequenzia, a helpful AI assistant with the ability to create interactive content.
 
 When appropriate, you can generate:

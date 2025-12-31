@@ -7,10 +7,12 @@ import {
   useMemo,
   useReducer,
   useEffect,
+  useState,
 } from 'react';
 import { useChat as useAIChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import type { Message, ExpansionState, ExpansionStateData, ExpandableContent } from '@/types';
+import { DEFAULT_MODEL_ID } from '@/lib/models';
 
 // Action types for expansion state reducer
 type ExpansionAction =
@@ -137,6 +139,10 @@ interface ChatContextValue {
   clearMessages: () => void;
   stop: () => void;
 
+  // Model selection
+  modelId: string;
+  setModelId: (modelId: string) => void;
+
   // Expansion state
   expansionStates: ExpansionStateMap;
   getExpansionState: (messageId: string) => ExpansionState;
@@ -158,6 +164,9 @@ interface ChatProviderProps {
 }
 
 export function ChatProvider({ children }: ChatProviderProps) {
+  // Model selection state
+  const [modelId, setModelId] = useState<string>(DEFAULT_MODEL_ID);
+
   // Expansion state management
   const [expansionStates, dispatchExpansion] = useReducer(
     expansionReducer,
@@ -199,7 +208,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
           if (part.type === 'text') {
             textContent += (part as { type: 'text'; text: string }).text;
           } else if (part.type.startsWith('tool-')) {
-            // Handle tool parts
+            // Handle tool parts - AI SDK v6 uses states:
+            // 'input-streaming', 'input-available', 'output-available', 'output-error'
             const toolPart = part as {
               type: string;
               toolCallId: string;
@@ -208,11 +218,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
               output?: unknown;
               state?: string;
             };
+            // Extract tool name from the type (e.g., 'tool-generateForm' -> 'generateForm')
+            const toolName = part.type.replace('tool-', '');
             toolInvocations.push({
               id: toolPart.toolCallId,
-              toolName: toolPart.toolName || 'unknown',
+              toolName: toolName,
               args: (toolPart.input as Record<string, unknown>) || {},
-              state: toolPart.state === 'output' ? 'result' : 'pending',
+              state: toolPart.state === 'output-available' ? 'result' : 'pending',
               result: toolPart.output,
             });
           }
@@ -233,9 +245,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
   // Send a message
   const sendMessage = useCallback(
     (content: string) => {
-      aiSendMessage({ text: content });
+      aiSendMessage({ text: content }, { body: { modelId } });
     },
-    [aiSendMessage]
+    [aiSendMessage, modelId]
   );
 
   // Regenerate last assistant message
@@ -251,11 +263,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
       if (textPart) {
         setMessages(aiMessages.slice(0, index));
         setTimeout(() => {
-          aiSendMessage({ text: textPart.text });
+          aiSendMessage({ text: textPart.text }, { body: { modelId } });
         }, 100);
       }
     }
-  }, [aiMessages, setMessages, aiSendMessage]);
+  }, [aiMessages, setMessages, aiSendMessage, modelId]);
 
   // Clear all messages
   const clearMessages = useCallback(() => {
@@ -332,6 +344,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
       regenerateLastMessage,
       clearMessages,
       stop,
+      modelId,
+      setModelId,
       expansionStates,
       getExpansionState,
       setExpansionState,
@@ -350,6 +364,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       regenerateLastMessage,
       clearMessages,
       stop,
+      modelId,
       expansionStates,
       getExpansionState,
       setExpansionState,

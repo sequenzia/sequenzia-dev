@@ -56,9 +56,11 @@ ChatProvider (expansion state + AI connection)
 
 ### AI Integration
 
-- **Model**: OpenAI GPT-4o via `@ai-sdk/openai`
+- **Gateway**: Vercel AI Gateway for multi-provider support
+- **Models**: Configurable via model picker (OpenAI, Anthropic, Google)
 - **Transport**: `DefaultChatTransport` from `ai` package (AI SDK v6)
 - **Tools**: Zod-validated schemas in `/api/chat/route.ts` - tools return structured data directly
+- **Model Config**: `/src/lib/models.ts` defines available models
 
 ### Expandable Content Types
 
@@ -88,4 +90,8 @@ Theme switching via `ThemeProvider` (light/dark/system).
 
 ### Environment
 
-Requires `OPENAI_API_KEY` in `.env.local`.
+Requires `AI_GATEWAY_API_KEY` in `.env.local` for Vercel AI Gateway access.
+
+To set up:
+1. Get an API key from the [AI Gateway dashboard](https://vercel.com/ai-gateway)
+2. Create `.env.local` with `AI_GATEWAY_API_KEY=your_key_here`
