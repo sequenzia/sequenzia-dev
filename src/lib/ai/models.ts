@@ -15,10 +15,24 @@ export const MODELS: Model[] = [
     description: "Fast and efficient",
   },
   {
+    id: "openai/gpt-5-mini",
+    name: "GPT-5 Mini",
+    provider: "OpenAI",
+    providerSlug: "openai",
+    description: "Fast and efficient",
+  },
+  {
     id: "openai/gpt-4o-mini",
     name: "GPT-4o Mini",
     provider: "OpenAI",
     providerSlug: "openai",
+    description: "Fast and efficient",
+  },
+  {
+    id: "openai/gpt-oss-120b",
+    name: "GPT-OSS 120B",
+    provider: "OpenAI",
+    providerSlug: "baseten",
     description: "Fast and efficient",
   },
   {
@@ -35,6 +49,13 @@ export const MODELS: Model[] = [
     providerSlug: "deepseek",
     description: "Fast and efficient",
   },
+  // {
+  //   id: "deepseek/deepseek-r1",
+  //   name: "DeepSeek R1",
+  //   provider: "DeepSeek",
+  //   providerSlug: "deepseek",
+  //   description: "Fast and efficient",
+  // },
 ];
 
 export const DEFAULT_MODEL_ID = "openai/gpt-5-nano";

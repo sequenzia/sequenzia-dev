@@ -19,5 +19,7 @@ export async function POST(req: Request) {
     tools: chatTools,
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    sendReasoning: true,
+  });
 }

@@ -18,6 +18,11 @@ import {
   ToolContent,
   ToolOutput,
 } from '@/components/ai-elements/tool';
+import {
+  Reasoning,
+  ReasoningTrigger,
+  ReasoningContent,
+} from '@/components/ai-elements/reasoning';
 import { useChat } from './ChatProvider';
 import { ContentBlock } from '@/components/blocks/ContentBlock';
 import {
@@ -33,9 +38,13 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage = memo(function ChatMessage({ message }: ChatMessageProps) {
-  const { regenerateLastMessage } = useChat();
+  const { regenerateLastMessage, messages, status } = useChat();
   const [copied, setCopied] = useState(false);
   const { shouldAnimate, hoverGesture, tapGesture } = useAnimationConfig();
+
+  // Check if this is the last message (for streaming detection)
+  const isLastMessage = messages.at(-1)?.id === message.id;
+  const isStreaming = status === 'streaming';
 
   const handleCopy = useCallback(async () => {
     // Get text content from message parts
@@ -62,6 +71,26 @@ export const ChatMessage = memo(function ChatMessage({ message }: ChatMessagePro
       <Message from={message.role}>
       <MessageContent>
         {message.parts?.map((part, index) => {
+          // Handle reasoning parts
+          if (part.type === 'reasoning') {
+            const reasoningPart = part as { type: 'reasoning'; text: string; reasoning?: string };
+            const isLastPart = index === (message.parts?.length ?? 0) - 1;
+            const isCurrentlyStreaming = isLastMessage && isStreaming && isLastPart;
+            // Support both 'text' and 'reasoning' property names for compatibility
+            const reasoningText = reasoningPart.text || reasoningPart.reasoning || '';
+
+            return (
+              <Reasoning
+                key={`reasoning-${index}`}
+                className="w-full"
+                isStreaming={isCurrentlyStreaming}
+              >
+                <ReasoningTrigger />
+                <ReasoningContent>{reasoningText}</ReasoningContent>
+              </Reasoning>
+            );
+          }
+
           // Handle text parts
           if (part.type === 'text') {
             const textPart = part as { type: 'text'; text: string };
